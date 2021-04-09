@@ -31,7 +31,7 @@ class ProjectGUI(QMainWindow):
         filemenu.addAction(exitAction)
         filemenu.addAction(openTrainModelDialog)
 
-        grid.addWidget(QPushButton('TODO: make this a title instead of a button'),0,0)
+        grid.addWidget(QLabel("Drawing Box"),0,0)
         
         self.drawing_box = QLabel()
         grid.addWidget(self.drawing_box,1,0)
@@ -41,8 +41,21 @@ class ProjectGUI(QMainWindow):
         self.canvas.fill(QColor(255,255,255))
         self.drawing_box.setPixmap(self.canvas)
 
+        # This block sets up the right hand side buttons in a grid nested inside the central grid, directly to the right of the drawing box
+        # TODO: improve variable naming for this section
+        subgrid = QGridLayout()
+        subwidget = QWidget(self)
+        subwidget.setLayout(subgrid)
         clear_button = QPushButton("Clear")
-        grid.addWidget(clear_button,0,1)
+        subgrid.addWidget(clear_button,0,0)
+        random_button = QPushButton("Random")
+        subgrid.addWidget(random_button,1,0)
+        model_button = QPushButton("Model")
+        subgrid.addWidget(model_button,2,0)
+        recognise_button = QPushButton("Recognise")
+        subgrid.addWidget(recognise_button,3,0)
+        grid.addWidget(subwidget,1,1)
+    
 
         self.setWindowTitle('Digit Recogniser')
         self.setGeometry(300, 300, 300, 200)

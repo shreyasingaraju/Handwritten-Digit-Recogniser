@@ -48,6 +48,7 @@ class ProjectGUI(QMainWindow):
         subwidget.setLayout(subgrid)
         clear_button = QPushButton("Clear")
         subgrid.addWidget(clear_button,0,0)
+        clear_button.clicked.connect(self.clear_clicked) #connects to push button to clear method
         random_button = QPushButton("Random")
         subgrid.addWidget(random_button,1,0)
         model_button = QPushButton("Model")
@@ -82,6 +83,12 @@ class ProjectGUI(QMainWindow):
         # Doesn't currently work, possibly because I'm drawing on the Qlabel rather than the QPixMap or something idk
         self.canvas.save("drawnimage.png")
         print("Saved as drawnimage.png (Saving not currently working)")
+    
+    def clear_clicked(self):
+        # Clears drawing on the canvas when clear button is pressed
+        # Prints a statement - can be removed later
+        self.drawing_box.setPixmap(self.canvas)
+        print("Clear button clicked")
 
 
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model

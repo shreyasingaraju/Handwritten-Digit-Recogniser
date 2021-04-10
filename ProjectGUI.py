@@ -31,6 +31,18 @@ class ProjectGUI(QMainWindow):
         filemenu.addAction(exitAction)
         filemenu.addAction(openTrainModelDialog)
 
+        # Add the view menubar
+
+        openviewTrainingImagesDialog = QAction(QIcon('D:\workspace\COMPSYS302_PyQt5\exit.png'), 'view Training Images', self)
+        openviewTrainingImagesDialog.triggered.connect(self.viewTrainingImagesDialog)
+
+        openviewTestingImagesDialog = QAction(QIcon('D:\workspace\COMPSYS302_PyQt5\exit.png'), 'view Testing Images', self)
+        openviewTestingImagesDialog.triggered.connect(self.viewTestingImagesDialog)
+
+        viewmenu = menubar.addMenu('&View')
+        viewmenu.addAction(openviewTrainingImagesDialog)
+        viewmenu.addAction(openviewTestingImagesDialog)
+
         grid.addWidget(QLabel("Drawing Box"),0,0)
         
         self.drawing_box = QLabel()
@@ -84,12 +96,11 @@ class ProjectGUI(QMainWindow):
         self.canvas.save("drawnimage.png")
         print("Saved as drawnimage.png (Saving not currently working)")
     
+    # This method clears drawing on the canvas when 'clear' button is pressed
     def clear_clicked(self):
-        # Clears drawing on the canvas when clear button is pressed
-        # Prints a statement - can be removed later
         self.drawing_box.setPixmap(self.canvas)
+        # Prints a statement - can be removed later
         print("Clear button clicked")
-
 
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.
@@ -97,6 +108,15 @@ class ProjectGUI(QMainWindow):
         dialog  = TrainDialog()
         dialog.exec_()
 
+    # This method is called when 'view Training Images' is pressed
+    def viewTrainingImagesDialog(self, s):
+        # Needs to be implemented
+        dialog  = TrainingImagesDialog()
+
+    # This method is called when 'view Testing Images' is pressed
+    def viewTestingImagesDialog(self, s):
+        # Needs to be implemented
+        dialog  = TestingImagesDialog()
 
 class TrainDialog(QDialog):
     def __init__(self):
@@ -121,6 +141,31 @@ class TrainDialog(QDialog):
         cncl_button = QPushButton("Cancel")
         dl_trn_cncl_grid.addWidget(cncl_button, 0, 2)
         self.layout.addWidget(dl_trn_cncl_widg)
+
+
+class TrainingImagesDialog(QWidget): # Needs to be implemented
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+    
+    def initUI(self):
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        self.setGeometry(200, 200, 200, 200)
+        self.show()
+
+class TestingImagesDialog(QWidget): # Needs to be implemented
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+    
+    def initUI(self):
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        self.setGeometry(200, 200, 200, 200)
+        self.show()
     
 
 if __name__ == '__main__':

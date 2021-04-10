@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp
 from PyQt5.QtCore import QBasicTimer, QPoint
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 
@@ -83,20 +83,38 @@ class ProjectGUI(QMainWindow):
         self.canvas.save("drawnimage.png")
         print("Saved as drawnimage.png (Saving not currently working)")
 
-    def trainModelDialog(self, s):
-        dialog = TrainingWindow()
 
-class TrainingWindow(QWidget):
+    # trainModelDialog() creates a dialog box when the user clicks File>Train Model
+    # When open, the user can press buttons to download MNIST, train the dataset and close the window.
+    def trainModelDialog(self, s):
+        dialog  = TrainDialog()
+        dialog.exec_()
+
+
+class TrainDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.initUI()
-    
-    def initUI(self):
-        grid = QGridLayout()
-        self.setLayout(grid)
 
-        self.setGeometry(200, 200, 200, 200)
-        self.show()
+    def initUI(self):
+        self.setModal(True)
+        self.setWindowTitle("Dialog")
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(QLabel("Status"))
+        self.setLayout(self.layout)
+
+        # This block provides buttons for downloading the dataset, training and closing the window
+        dl_trn_cncl_grid = QGridLayout()
+        dl_trn_cncl_widg = QWidget(self)
+        dl_trn_cncl_widg.setLayout(dl_trn_cncl_grid)
+        dl_mnist_button =  QPushButton("Download MNIST")
+        dl_trn_cncl_grid.addWidget(dl_mnist_button, 0, 0)
+        trn_button = QPushButton("Train")
+        dl_trn_cncl_grid.addWidget(trn_button, 0, 1)
+        cncl_button = QPushButton("Cancel")
+        dl_trn_cncl_grid.addWidget(cncl_button, 0, 2)
+        self.layout.addWidget(dl_trn_cncl_widg)
+    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

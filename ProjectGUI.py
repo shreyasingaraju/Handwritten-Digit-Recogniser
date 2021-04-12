@@ -1,7 +1,11 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser
 from PyQt5.QtCore import QBasicTimer, QPoint
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
+
+import torch
+import torchvision
+import torchvision.datasets as datasets
 
 class ProjectGUI(QMainWindow):
     def __init__(self):
@@ -126,9 +130,21 @@ class TrainDialog(QDialog):
     def initUI(self):
         self.setModal(True)
         self.setWindowTitle("Dialog")
+        #self.layout.addWidget(QLabel("Status"))
+
+        # Added text box in dialog window
+        self.textbox = QTextBrowser(self)
+        self.textbox.resize(400,200)
+        self.textbox.move(15,15)
+
+        # Added progress bar
+        self.pbar = QProgressBar(self)
+        self.pbar.setGeometry(15, 230, 450, 15)
+
         self.layout = QVBoxLayout()
-        self.layout.addWidget(QLabel("Status"))
         self.setLayout(self.layout)
+        self.setGeometry(300, 300,300, 300)
+        self.show()
 
         # This block provides buttons for downloading the dataset, training and closing the window
         dl_trn_cncl_grid = QGridLayout()
@@ -136,11 +152,21 @@ class TrainDialog(QDialog):
         dl_trn_cncl_widg.setLayout(dl_trn_cncl_grid)
         dl_mnist_button =  QPushButton("Download MNIST")
         dl_trn_cncl_grid.addWidget(dl_mnist_button, 0, 0)
+        dl_mnist_button.clicked.connect(self.downloadMnist) #connects to download button to clear method downloadMnist method
         trn_button = QPushButton("Train")
         dl_trn_cncl_grid.addWidget(trn_button, 0, 1)
         cncl_button = QPushButton("Cancel")
         dl_trn_cncl_grid.addWidget(cncl_button, 0, 2)
         self.layout.addWidget(dl_trn_cncl_widg)
+
+    # This method downloads the MNIST dataset when button is pressed
+    def downloadMnist(self, s):
+        # Prints text when download begins
+        self.textbox.setText("Downloading train dataset...\nDownloading test dataset...")
+        mnist_trainset = datasets.MNIST(root='./data', train=True, download=True, transform=None)
+        mnist_testset = datasets.MNIST(root='./data', train=False, download=True, transform=None) 
+        # Can be removed later
+        print("Downloading") 
 
 
 class TrainingImagesDialog(QWidget): # Needs to be implemented

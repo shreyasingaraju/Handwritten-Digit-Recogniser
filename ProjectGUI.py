@@ -152,22 +152,35 @@ class TrainDialog(QDialog):
         dl_trn_cncl_widg.setLayout(dl_trn_cncl_grid)
         dl_mnist_button =  QPushButton("Download MNIST")
         dl_trn_cncl_grid.addWidget(dl_mnist_button, 0, 0)
-        dl_mnist_button.clicked.connect(self.downloadMnist) #connects to download button to clear method downloadMnist method
+        dl_mnist_button.clicked.connect(self.downloadMnist) # Connects to download button to downloadMnist method
         trn_button = QPushButton("Train")
         dl_trn_cncl_grid.addWidget(trn_button, 0, 1)
+        trn_button.clicked.connect(self.train) # Connects to train button to train method
         cncl_button = QPushButton("Cancel")
         dl_trn_cncl_grid.addWidget(cncl_button, 0, 2)
+        cncl_button.clicked.connect(self.cancel) # Connects to cancel button to cancel method train method
         self.layout.addWidget(dl_trn_cncl_widg)
 
     # This method downloads the MNIST dataset when button is pressed
     def downloadMnist(self, s):
         # Prints text when download begins
         self.textbox.setText("Downloading train dataset...\nDownloading test dataset...")
+        # Unsure if this actually works (better way to implement this)
         mnist_trainset = datasets.MNIST(root='./data', train=True, download=True, transform=None)
         mnist_testset = datasets.MNIST(root='./data', train=False, download=True, transform=None) 
-        # Can be removed later
-        print("Downloading") 
+        print("Downloading") # Can be removed later
 
+    # This method trains the DNN Model using the dataset
+    def train(self, s):
+        # Prints text when training begins
+        self.textbox.append("Training...\nAccuracy:") # Need to implement accuracy %
+        print("Training") # Can be removed later
+
+    # This method cancels the downloading or training at anytime 
+    def cancel(self, s):
+        # Clears dialog box when cancelled
+        self.textbox.clear()
+        print("Canceled") # Can be removed later
 
 class TrainingImagesDialog(QWidget): # Needs to be implemented
     def __init__(self):

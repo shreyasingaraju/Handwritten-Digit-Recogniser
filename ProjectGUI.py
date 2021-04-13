@@ -37,10 +37,10 @@ class ProjectGUI(QMainWindow):
 
         # Add the view menubar
 
-        openviewTrainingImagesDialog = QAction(QIcon('D:\workspace\COMPSYS302_PyQt5\exit.png'), 'view Training Images', self)
+        openviewTrainingImagesDialog = QAction(QIcon('.\exit.png'), 'view Training Images', self)
         openviewTrainingImagesDialog.triggered.connect(self.viewTrainingImagesDialog)
 
-        openviewTestingImagesDialog = QAction(QIcon('D:\workspace\COMPSYS302_PyQt5\exit.png'), 'view Testing Images', self)
+        openviewTestingImagesDialog = QAction(QIcon('.\exit.png'), 'view Testing Images', self)
         openviewTestingImagesDialog.triggered.connect(self.viewTestingImagesDialog)
 
         viewmenu = menubar.addMenu('&View')
@@ -132,18 +132,22 @@ class TrainDialog(QDialog):
         self.setWindowTitle("Dialog")
         #self.layout.addWidget(QLabel("Status"))
 
-        # Added text box in dialog window
-        self.textbox = QTextBrowser(self)
-        self.textbox.resize(400,200)
-        self.textbox.move(15,15)
-
-        # Added progress bar
-        self.pbar = QProgressBar(self)
-        self.pbar.setGeometry(15, 230, 450, 15)
-
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.setGeometry(300, 300,300, 300)
+
+        # Added text box in dialog window
+        self.textbox = QTextBrowser(self)
+        self.layout.addWidget(self.textbox)
+        # textbox.resize(400,200)
+        # textbox.move(15,15)
+
+        # Added progress bar
+        self.pbar = QProgressBar(self)
+        self.layout.addWidget(self.pbar)
+        # self.pbar.setGeometry(15, 230, 450, 15)
+
+        
         self.show()
 
         # This block provides buttons for downloading the dataset, training and closing the window

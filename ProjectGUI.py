@@ -93,12 +93,13 @@ class ProjectGUI(QMainWindow):
         painter.end()
         self.update()
 
+
     def mouseReleaseEvent(self, e):
         self.update()
         # Save the image when the user releases the mouse
-        # Doesn't currently work, possibly because I'm drawing on the Qlabel rather than the QPixMap or something idk
-        self.canvas.save("drawnimage.png")
-        print("Saved as drawnimage.png (Saving not currently working)")
+        img = QPixmap(self.drawing_box.pixmap())
+        img.save("drawnimage.png")
+        print("Saved as drawnimage.png")
     
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clear_clicked(self):

@@ -7,6 +7,8 @@ import torch
 import torchvision
 import torchvision.datasets as datasets
 
+from modules.ProjectModel import ProjModel
+
 class ProjectGUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -14,7 +16,6 @@ class ProjectGUI(QMainWindow):
 
     def initUI(self):
         grid = QGridLayout()
-        # self.setLayout(grid)
         window = QWidget(self)
         window.setLayout(grid)
         self.setCentralWidget(window)
@@ -138,8 +139,11 @@ class TrainDialog(QDialog):
         self.setGeometry(300, 300,300, 300)
 
         # Added text box in dialog window
+        self.text = " "
         self.textbox = QTextBrowser(self)
+
         self.layout.addWidget(self.textbox)
+        self.textbox.setText(self.text)
         # textbox.resize(400,200)
         # textbox.move(15,15)
 
@@ -168,17 +172,29 @@ class TrainDialog(QDialog):
 
     # This method downloads the MNIST dataset when button is pressed
     def downloadMnist(self, s):
-        # Prints text when download begins
-        self.textbox.setText("Downloading train dataset...\nDownloading test dataset...")
-        # Unsure if this actually works (better way to implement this)
-        mnist_trainset = datasets.MNIST(root='./data', train=True, download=True, transform=None)
-        mnist_testset = datasets.MNIST(root='./data', train=False, download=True, transform=None) 
+
         print("Downloading") # Can be removed later
+        
+        
+        self.textbox.append("Downloading train dataset...")
+        model.downloadTrainSet()
+        
+
+        
+        
+        self.textbox.append("\nDownloading test dataset...")
+        model.downloadTestSet()
+
+        
+        
 
     # This method trains the DNN Model using the dataset
     def train(self, s):
         # Prints text when training begins
-        self.textbox.append("Training...\nAccuracy:") # Need to implement accuracy %
+        self.textbox.append("Training...\n")
+        model = ProjectModel(mnist_trainset)
+        
+        # Accuracy:") # Need to implement accuracy %
         print("Training") # Can be removed later
 
     # This method cancels the downloading or training at anytime 
@@ -215,4 +231,5 @@ class TestingImagesDialog(QWidget): # Needs to be implemented
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = ProjectGUI()
+    model = ProjModel
     sys.exit(app.exec_())

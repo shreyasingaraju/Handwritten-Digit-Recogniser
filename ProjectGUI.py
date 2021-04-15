@@ -152,30 +152,24 @@ class TrainDialog(QDialog):
 
         self.layout.addWidget(self.textbox)
         self.textbox.setText(self.text)
-        # textbox.resize(400,200)
-        # textbox.move(15,15)
 
         # Added progress bar
         self.pbar = QProgressBar(self)
         self.layout.addWidget(self.pbar)
-        # self.pbar.setGeometry(15, 230, 450, 15)
 
-        
-        self.show()
-
-        # This block provides buttons for downloading the dataset, training and closing the window
-        dl_trn_cncl_grid = QGridLayout()
+        # This block provides buttons for downloading the dataset, training and closing the window and arranges them into a horizontal grid
+        dl_trn_cncl_grid = QHBoxLayout()
         dl_trn_cncl_widg = QWidget(self)
         dl_trn_cncl_widg.setLayout(dl_trn_cncl_grid)
         dl_mnist_button =  QPushButton("Download MNIST")
-        dl_trn_cncl_grid.addWidget(dl_mnist_button, 0, 0)
-        dl_mnist_button.clicked.connect(self.downloadMnist) # Connects to download button to downloadMnist method
+        dl_trn_cncl_grid.addWidget(dl_mnist_button)
+        dl_mnist_button.clicked.connect(self.downloadMnist)
         trn_button = QPushButton("Train")
-        dl_trn_cncl_grid.addWidget(trn_button, 0, 1)
-        trn_button.clicked.connect(self.train) # Connects to train button to train method
+        dl_trn_cncl_grid.addWidget(trn_button)
+        trn_button.clicked.connect(self.train)
         cncl_button = QPushButton("Cancel")
-        dl_trn_cncl_grid.addWidget(cncl_button, 0, 2)
-        cncl_button.clicked.connect(self.cancel) # Connects to cancel button to cancel method train method
+        dl_trn_cncl_grid.addWidget(cncl_button)
+        cncl_button.clicked.connect(self.cancel)
         self.layout.addWidget(dl_trn_cncl_widg)
 
     # This method downloads the MNIST dataset when button is pressed
@@ -205,33 +199,36 @@ class TrainDialog(QDialog):
         print("Canceled") # Can be removed later
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images
+# The dialog shows 100 images at a time, and can be navigated by clicking Next or Previous to view the next or last 100 images respectively
 class ImagesDialog(QDialog):
     def __init__(self):
         super().__init__()
         
     def initUI(self):
-        self.page = 0
+        
+        
 
+        # self.layout is a vertical box structure, to which we add the grid of images, the next/prev buttons and the page number
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         
+        # self.images is a grid of 100 x 100 images from the dataset
+        self.page = 0   # This is the page number
         self.images = QWidget()
         self.grid = QGridLayout()
         self.images.setLayout(self.grid)
-
         self.layout.addWidget(self.images)
 
+        # next_prev_grid contains the next and previous buttons that change the page number 
         next_prev_grid = QHBoxLayout()
         next_prev_widg = QWidget(self)
         next_prev_widg.setLayout(next_prev_grid)
-        
         prev_button = QPushButton("Previous")
         next_button =  QPushButton("Next")
         next_prev_grid.addWidget(prev_button)
         next_prev_grid.addWidget(next_button)
-        
-        prev_button.clicked.connect(self.prevPage) # Connects to train button to train method
-        next_button.clicked.connect(self.nextPage) # Connects to download button to downloadMnist method
+        prev_button.clicked.connect(self.prevPage)
+        next_button.clicked.connect(self.nextPage)
         self.layout.addWidget(next_prev_widg)
 
         self.resize(300, 400)
@@ -243,36 +240,38 @@ class ImagesDialog(QDialog):
 
         self.show()
 
+    # Called in ProjectGUI.viewTrainingImagesDialog or ProjectGUI.viewTestingImagesDialog and sets the mode of the dialog depending on which option the user selected
     def setMode(self, mode):
         self.mode = mode
         self.initUI()
 
+    # Increments the page number if not at max, then loads the new images
     def nextPage(self):
         if (self.mode == 'train' and self.page < 599) or (self.mode == 'test' and self.page < 99):
             self.page += 1
             self.loadImages()
             self.pageNum.setText(str(self.page))
 
-        
-        
-            
-
+    # Decrements the page number if not at max, then loads the new images
     def prevPage(self):
         if self.page > 0:
             self.page -= 1
             self.loadImages()
             self.pageNum.setText(str(self.page))
 
+    # Loads the range of images determined by the page number and arranges them into the grid
     def loadImages(self):
-        if self.mode == 'train':
-                for i in range(0,9):
-                    for j in range(0,9):
-                        label = QLabel()
+            for i in range(0,9):
+                for j in range(0,9):
+                    label = QLabel()
+                    if self.mode == 'train':
                         imgArr = np.squeeze(model.mnist_trainset[i+j + 100 * self.page][0])
-                        plot.imsave('temp_img.png', imgArr)
-                        img = QPixmap('temp_img.png')
-                        label.setPixmap(img)
-                        self.grid.addWidget(label, i, j)
+                    elif self.mode == 'test':
+                        imgArr = np.squeeze(model.mnist_testset[i+j + 100 * self.page][0])
+                    plot.imsave('temp_img.png', imgArr)
+                    img = QPixmap('temp_img.png')
+                    label.setPixmap(img)
+                    self.grid.addWidget(label, i, j)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

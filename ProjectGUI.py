@@ -7,6 +7,8 @@ import torch
 import torchvision
 import torchvision.datasets as datasets
 
+import matplotlib.pyplot as plot
+
 from modules.ProjectModel import ProjModel
 
 class ProjectGUI(QMainWindow):
@@ -15,6 +17,9 @@ class ProjectGUI(QMainWindow):
         self.initUI()
 
     def initUI(self):
+        # Make a model class which contains the datasets and training data
+        self.model = ProjModel
+
         grid = QGridLayout()
         window = QWidget(self)
         window.setLayout(grid)
@@ -36,17 +41,17 @@ class ProjectGUI(QMainWindow):
         filemenu.addAction(exitAction)
         filemenu.addAction(openTrainModelDialog)
 
+
         # Add the view menubar
+        openViewTrainingImagesDialog = QAction(QIcon('.\exit.png'), 'view Training Images', self)
+        openViewTrainingImagesDialog.triggered.connect(self.viewTestingImagesDialog)
 
-        openviewTrainingImagesDialog = QAction(QIcon('.\exit.png'), 'view Training Images', self)
-        openviewTrainingImagesDialog.triggered.connect(self.viewTrainingImagesDialog)
-
-        openviewTestingImagesDialog = QAction(QIcon('.\exit.png'), 'view Testing Images', self)
-        openviewTestingImagesDialog.triggered.connect(self.viewTestingImagesDialog)
+        openViewTestingImagesDialog = QAction(QIcon('.\exit.png'), 'view Testing Images', self)
+        openViewTestingImagesDialog.triggered.connect(self.viewTestingImagesDialog)
 
         viewmenu = menubar.addMenu('&View')
-        viewmenu.addAction(openviewTrainingImagesDialog)
-        viewmenu.addAction(openviewTestingImagesDialog)
+        viewmenu.addAction(openViewTrainingImagesDialog)
+        viewmenu.addAction(openViewTestingImagesDialog)
 
         grid.addWidget(QLabel("Drawing Box"),0,0)
         
@@ -94,7 +99,6 @@ class ProjectGUI(QMainWindow):
         painter.end()
         self.update()
 
-
     def mouseReleaseEvent(self, e):
         self.update()
         # Save the image when the user releases the mouse
@@ -112,17 +116,20 @@ class ProjectGUI(QMainWindow):
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.
     def trainModelDialog(self, s):
         dialog  = TrainDialog()
+        dialog.parent = self
         dialog.exec_()
 
-    # This method is called when 'view Training Images' is pressed
-    def viewTrainingImagesDialog(self, s):
-        # Needs to be implemented
-        dialog  = TrainingImagesDialog()
+    # This method is called when 'View Training Images' is pressed
+    def viewTestingImagesDialog(self):
+        imgDialog  = ImagesDialog()
+        imgDialog.setMode('train')
+        imgDialog.exec_()
 
-    # This method is called when 'view Testing Images' is pressed
-    def viewTestingImagesDialog(self, s):
-        # Needs to be implemented
-        dialog  = TestingImagesDialog()
+    # This method is called when 'View Testing Images' is pressed
+    def viewTestingImagesDialog(self):
+        imgDialog  = ImagesDialog()
+        imgDialog.setMode('test')
+        imgDialog.exec_()
 
 class TrainDialog(QDialog):
     def __init__(self):
@@ -175,24 +182,17 @@ class TrainDialog(QDialog):
 
         print("Downloading") # Can be removed later
         
-        
         self.textbox.append("Downloading train dataset...")
         model.downloadTrainSet()
-        
 
-        
-        
         self.textbox.append("\nDownloading test dataset...")
         model.downloadTestSet()
-
-        
-        
 
     # This method trains the DNN Model using the dataset
     def train(self, s):
         # Prints text when training begins
         self.textbox.append("Training...\n")
-        model = ProjectModel(mnist_trainset)
+        model.TrainModel()
         
         # Accuracy:") # Need to implement accuracy %
         print("Training") # Can be removed later
@@ -203,33 +203,39 @@ class TrainDialog(QDialog):
         self.textbox.clear()
         print("Canceled") # Can be removed later
 
-class TrainingImagesDialog(QWidget): # Needs to be implemented
+# This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images
+class ImagesDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.initUI()
-    
+        
     def initUI(self):
         grid = QGridLayout()
         self.setLayout(grid)
 
         self.setGeometry(200, 200, 200, 200)
+        
+
+        if mode == 'train':
+            attr = 1
+            
+    
+        elif mode =='test':
+            attr = 2
+
+
+        else: print("Invalid Mode")
+
+
         self.show()
 
-class TestingImagesDialog(QWidget): # Needs to be implemented
-    def __init__(self):
-        super().__init__()
+    def setMode(self, mode):
+        self.mode = mode
         self.initUI()
-    
-    def initUI(self):
-        grid = QGridLayout()
-        self.setLayout(grid)
 
-        self.setGeometry(200, 200, 200, 200)
-        self.show()
-    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = ProjectGUI()
-    model = ProjModel
+    global model
+    model = ProjModel()
     sys.exit(app.exec_())

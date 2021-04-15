@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser
+from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser
 from PyQt5.QtCore import QBasicTimer, QPoint
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 
@@ -8,6 +8,7 @@ import torchvision
 import torchvision.datasets as datasets
 
 import matplotlib.pyplot as plot
+import numpy as np
 
 from modules.ProjectModel import ProjModel
 
@@ -44,7 +45,7 @@ class ProjectGUI(QMainWindow):
 
         # Add the view menubar
         openViewTrainingImagesDialog = QAction(QIcon('.\exit.png'), 'view Training Images', self)
-        openViewTrainingImagesDialog.triggered.connect(self.viewTestingImagesDialog)
+        openViewTrainingImagesDialog.triggered.connect(self.viewTrainingImagesDialog)
 
         openViewTestingImagesDialog = QAction(QIcon('.\exit.png'), 'view Testing Images', self)
         openViewTestingImagesDialog.triggered.connect(self.viewTestingImagesDialog)
@@ -120,7 +121,7 @@ class ProjectGUI(QMainWindow):
         dialog.exec_()
 
     # This method is called when 'View Training Images' is pressed
-    def viewTestingImagesDialog(self):
+    def viewTrainingImagesDialog(self):
         imgDialog  = ImagesDialog()
         imgDialog.setMode('train')
         imgDialog.exec_()
@@ -214,16 +215,66 @@ class ImagesDialog(QDialog):
 
         self.setGeometry(200, 200, 200, 200)
         
+        grid = QGridLayout()
+        window = QWidget(self)
+        window.setLayout(grid)
 
-        if mode == 'train':
-            attr = 1
-            
-    
-        elif mode =='test':
+
+        # label = QLabel()
+        # imgArr = np.squeeze(model.mnist_trainset[0][0])
+        # plot.imsave('temp_img.png', imgArr)
+        # img = QPixmap('temp_img.png')
+        # label.setPixmap(img)
+        # label.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
+        # grid.addWidget(label, 0, 0)
+        # print("apparetly just added a thign to grid")
+
+        # label = QLabel()
+        # imgArr = np.squeeze(model.mnist_trainset[1][0])
+        # plot.imsave('temp_img.png', imgArr)
+        # img = QPixmap('temp_img.png')
+        # label.setPixmap(img)
+        # label.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
+        # grid.addWidget(label, 1, 0)
+        # print("apparetly just added a thign to grid")
+        
+        
+        # try:
+        #     if self.mode == 'train':
+        #         for i in range(0,9):
+        #             for j in range(0,9):
+        #                 label = QLabel()
+        #                 imgArr = np.squeeze(model.mnist_trainset[i+j][0])
+        #                 plot.imsave('temp_img.png', imgArr)
+        #                 img = QPixmap('temp_img.png')
+        #                 label.setPixmap(img)
+        #                 grid.addWidget(label, i, j)
+        #                 print("apparetly just added a thign to grid")
+        # except AttributeError:
+        #     print("Training set not found - go to File>Train Model to download")
+
+        if 1 == 1:
+            for i in range(3):
+                label = QLabel()
+                imgArr = np.squeeze(model.mnist_trainset[i][0])
+                plot.imsave('temp_img.png', imgArr)
+                img = QPixmap('temp_img.png')
+                label.setPixmap(img)
+                label.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
+                label.adjustSize()
+                grid.addWidget(label, i, 0)
+                print("apparetly just added a thign to grid")
+                # for j in range(0,9):
+                    
+
+
+
+        if (self.mode =='test'):
             attr = 2
 
 
-        else: print("Invalid Mode")
+        else: 
+            print("Invalid Mode")
 
 
         self.show()

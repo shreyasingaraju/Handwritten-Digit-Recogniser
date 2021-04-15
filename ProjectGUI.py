@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser
+from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser
 from PyQt5.QtCore import QBasicTimer, QPoint
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 
@@ -210,72 +210,36 @@ class ImagesDialog(QDialog):
         super().__init__()
         
     def initUI(self):
-        grid = QGridLayout()
-        self.setLayout(grid)
+        self.page = 0
 
-        self.setGeometry(200, 200, 200, 200)
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
         
-        grid = QGridLayout()
-        window = QWidget(self)
-        window.setLayout(grid)
+        self.images = QWidget()
+        self.grid = QGridLayout()
+        self.images.setLayout(self.grid)
 
+        self.layout.addWidget(self.images)
 
-        # label = QLabel()
-        # imgArr = np.squeeze(model.mnist_trainset[0][0])
-        # plot.imsave('temp_img.png', imgArr)
-        # img = QPixmap('temp_img.png')
-        # label.setPixmap(img)
-        # label.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
-        # grid.addWidget(label, 0, 0)
-        # print("apparetly just added a thign to grid")
-
-        # label = QLabel()
-        # imgArr = np.squeeze(model.mnist_trainset[1][0])
-        # plot.imsave('temp_img.png', imgArr)
-        # img = QPixmap('temp_img.png')
-        # label.setPixmap(img)
-        # label.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
-        # grid.addWidget(label, 1, 0)
-        # print("apparetly just added a thign to grid")
+        next_prev_grid = QHBoxLayout()
+        next_prev_widg = QWidget(self)
+        next_prev_widg.setLayout(next_prev_grid)
         
+        prev_button = QPushButton("Previous")
+        next_button =  QPushButton("Next")
+        next_prev_grid.addWidget(prev_button)
+        next_prev_grid.addWidget(next_button)
         
-        # try:
-        #     if self.mode == 'train':
-        #         for i in range(0,9):
-        #             for j in range(0,9):
-        #                 label = QLabel()
-        #                 imgArr = np.squeeze(model.mnist_trainset[i+j][0])
-        #                 plot.imsave('temp_img.png', imgArr)
-        #                 img = QPixmap('temp_img.png')
-        #                 label.setPixmap(img)
-        #                 grid.addWidget(label, i, j)
-        #                 print("apparetly just added a thign to grid")
-        # except AttributeError:
-        #     print("Training set not found - go to File>Train Model to download")
+        prev_button.clicked.connect(self.prevPage) # Connects to train button to train method
+        next_button.clicked.connect(self.nextPage) # Connects to download button to downloadMnist method
+        self.layout.addWidget(next_prev_widg)
 
-        if 1 == 1:
-            for i in range(3):
-                label = QLabel()
-                imgArr = np.squeeze(model.mnist_trainset[i][0])
-                plot.imsave('temp_img.png', imgArr)
-                img = QPixmap('temp_img.png')
-                label.setPixmap(img)
-                label.setSizePolicy(QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding))
-                label.adjustSize()
-                grid.addWidget(label, i, 0)
-                print("apparetly just added a thign to grid")
-                # for j in range(0,9):
-                    
-
-
-
-        if (self.mode =='test'):
-            attr = 2
-
-
-        else: 
-            print("Invalid Mode")
-
+        self.resize(300, 400)
+        
+        self.pageNum = QLabel()
+        self.pageNum.setText(str(self.page))
+        self.layout.addWidget(self.pageNum)
+        self.loadImages()
 
         self.show()
 
@@ -283,6 +247,32 @@ class ImagesDialog(QDialog):
         self.mode = mode
         self.initUI()
 
+    def nextPage(self):
+        if (self.mode == 'train' and self.page < 599) or (self.mode == 'test' and self.page < 99):
+            self.page += 1
+            self.loadImages()
+            self.pageNum.setText(str(self.page))
+
+        
+        
+            
+
+    def prevPage(self):
+        if self.page > 0:
+            self.page -= 1
+            self.loadImages()
+            self.pageNum.setText(str(self.page))
+
+    def loadImages(self):
+        if self.mode == 'train':
+                for i in range(0,9):
+                    for j in range(0,9):
+                        label = QLabel()
+                        imgArr = np.squeeze(model.mnist_trainset[i+j + 100 * self.page][0])
+                        plot.imsave('temp_img.png', imgArr)
+                        img = QPixmap('temp_img.png')
+                        label.setPixmap(img)
+                        self.grid.addWidget(label, i, j)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -18,8 +18,9 @@ class ProjectGUI(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        # Make a model class which contains the datasets and training data
-        self.model = ProjModel
+        # Make a model instance which contains the datasets and training data
+        global model
+        model = ProjModel()
 
         grid = QGridLayout()
         window = QWidget(self)
@@ -272,10 +273,3 @@ class ImagesDialog(QDialog):
                     img = QPixmap('temp_img.png')
                     label.setPixmap(img)
                     self.grid.addWidget(label, i, j)
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = ProjectGUI()
-    global model
-    model = ProjModel()
-    sys.exit(app.exec_())

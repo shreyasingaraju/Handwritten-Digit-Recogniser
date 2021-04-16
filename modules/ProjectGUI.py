@@ -141,7 +141,6 @@ class TrainDialog(QDialog):
     def initUI(self):
         self.setModal(True)
         self.setWindowTitle("Dialog")
-        #self.layout.addWidget(QLabel("Status"))
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -150,7 +149,6 @@ class TrainDialog(QDialog):
         # Added text box in dialog window
         self.text = " "
         self.textbox = QTextBrowser(self)
-
         self.layout.addWidget(self.textbox)
         self.textbox.setText(self.text)
 
@@ -168,6 +166,9 @@ class TrainDialog(QDialog):
         trn_button = QPushButton("Train")
         dl_trn_cncl_grid.addWidget(trn_button)
         trn_button.clicked.connect(self.train)
+        test_button = QPushButton("Test")
+        dl_trn_cncl_grid.addWidget(test_button)
+        test_button.clicked.connect(self.test)
         cncl_button = QPushButton("Cancel")
         dl_trn_cncl_grid.addWidget(cncl_button)
         cncl_button.clicked.connect(self.cancel)
@@ -177,21 +178,28 @@ class TrainDialog(QDialog):
     def downloadMnist(self, s):
 
         print("Downloading") # Can be removed later
-        
         self.textbox.append("Downloading train dataset...")
         model.downloadTrainSet()
-
-        self.textbox.append("\nDownloading test dataset...")
+        self.textbox.append("Downloading test dataset...")
         model.downloadTestSet()
+        self.textbox.append("Done!")
 
     # This method trains the DNN Model using the dataset
     def train(self, s):
-        # Prints text when training begins
-        self.textbox.append("Training...\n")
+        # Prints text when training begins NOTE: currently the textbox.append gets run after TrainModel() finishes somehow?
+        self.textbox.append("Training...")
         model.TrainModel()
         
         # Accuracy:") # Need to implement accuracy %
         print("Training") # Can be removed later
+
+    def test(self, s):
+        # Prints text when testing begins
+        self.textbox.append("Testing...")
+        model.TestModel()
+        
+        # Accuracy:") # Need to implement accuracy %
+        print("Testing") # Can be removed later
 
     # This method cancels the downloading or training at anytime 
     def cancel(self, s):

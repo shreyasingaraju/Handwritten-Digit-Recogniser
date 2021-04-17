@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser
-from PyQt5.QtCore import QBasicTimer, QPoint
+from PyQt5.QtCore import QBasicTimer, QPoint, QThread, pyqtSignal, QObject
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 
 import torch
@@ -160,18 +160,18 @@ class TrainDialog(QDialog):
         dl_trn_cncl_grid = QHBoxLayout()
         dl_trn_cncl_widg = QWidget(self)
         dl_trn_cncl_widg.setLayout(dl_trn_cncl_grid)
-        dl_mnist_button =  QPushButton("Download MNIST")
-        dl_trn_cncl_grid.addWidget(dl_mnist_button)
-        dl_mnist_button.clicked.connect(self.downloadMnist)
-        trn_button = QPushButton("Train")
-        dl_trn_cncl_grid.addWidget(trn_button)
-        trn_button.clicked.connect(self.train)
-        test_button = QPushButton("Test")
-        dl_trn_cncl_grid.addWidget(test_button)
-        test_button.clicked.connect(self.test)
-        cncl_button = QPushButton("Cancel")
-        dl_trn_cncl_grid.addWidget(cncl_button)
-        cncl_button.clicked.connect(self.cancel)
+        self.dl_mnist_button =  QPushButton("Download MNIST")
+        dl_trn_cncl_grid.addWidget(self.dl_mnist_button)
+        self.dl_mnist_button.clicked.connect(self.downloadMnist)
+        self.trn_button = QPushButton("Train")
+        dl_trn_cncl_grid.addWidget(self.trn_button)
+        self.trn_button.clicked.connect(self.train)
+        self.test_button = QPushButton("Test")
+        dl_trn_cncl_grid.addWidget(self.test_button)
+        self.test_button.clicked.connect(self.test)
+        self.cncl_button = QPushButton("Cancel")
+        dl_trn_cncl_grid.addWidget(self.cncl_button)
+        self.cncl_button.clicked.connect(self.cancel)
         self.layout.addWidget(dl_trn_cncl_widg)
 
     # This method downloads the MNIST dataset when button is pressed
@@ -188,15 +188,43 @@ class TrainDialog(QDialog):
     def train(self, s):
         # Prints text when training begins NOTE: currently the textbox.append gets run after TrainModel() finishes somehow?
         self.textbox.append("Training...")
-        model.TrainModel()
-        
-        # Accuracy:") # Need to implement accuracy %
-        print("Training") # Can be removed later
 
+        self.thread = QThread()
+        self.worker = TrainingWorker()
+        self.worker.moveToThread(self.thread)
+
+        # Connect signals and slots here
+        self.thread.started.connect(self.worker.workerTrain)
+        self.worker.progress.connect(self.reportProgress)
+
+        # Disable the buttons that aren't meant to be used
+        self.dl_mnist_button.setEnabled(False)
+        self.trn_button.setEnabled(False)
+        self.test_button.setEnabled(False)
+
+        # Re-enable the buttons when the process finishes or cancel is pressed
+        self.thread.finished.connect(self.endTrainThread)
+        self.cncl_button.clicked.connect(self.endTrainThread)
+
+        # Start the thread
+        self.thread.start()
+        # Accuracy:") # Need to implement accuracy %
+
+    def endTrainThread(self):
+        self.dl_mnist_button.setEnabled(True)
+        self.trn_button.setEnabled(True)
+        self.test_button.setEnabled(True)
+        self.thread.quit
+        self.worker.deleteLater
+        self.thread.deleteLater
+
+    def reportProgress(self, epoch):
+        self.textbox.append("Epoch: " + str(epoch))
+        
     def test(self, s):
         # Prints text when testing begins
         self.textbox.append("Testing...")
-        model.TestModel()
+        model.testModel()
         
         # Accuracy:") # Need to implement accuracy %
         print("Testing") # Can be removed later
@@ -207,16 +235,28 @@ class TrainDialog(QDialog):
         self.textbox.clear()
         print("Canceled") # Can be removed later
 
+# This class is put into a thread and then runs the training so that the user can keep interacting with the GUI during training
+# Adapted from https://realpython.com/python-pyqt-qthread/
+class TrainingWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def workerTrain(self):
+        print("Working...")
+        for epoch in range(3):
+            model.trainEpoch()
+            self.progress.emit(epoch)
+        print("Done?")
+        self.finished.emit()
+
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images
 # The dialog shows 100 images at a time, and can be navigated by clicking Next or Previous to view the next or last 100 images respectively
 class ImagesDialog(QDialog):
+    
     def __init__(self):
         super().__init__()
         
     def initUI(self):
-        
-        
-
         # self.layout is a vertical box structure, to which we add the grid of images, the next/prev buttons and the page number
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)

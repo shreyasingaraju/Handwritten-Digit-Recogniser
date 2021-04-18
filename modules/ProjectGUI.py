@@ -6,9 +6,12 @@ from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 import torch
 import torchvision
 import torchvision.datasets as datasets
+from torchvision import transforms
 
 import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image, ImageOps
 
 from modules.ProjectModel import ProjModel
 
@@ -75,11 +78,13 @@ class ProjectGUI(QMainWindow):
         clear_button.clicked.connect(self.clear_clicked) #connects to push button to clear method
         random_button = QPushButton("Random")
         subgrid.addWidget(random_button,1,0)
+        random_button.clicked.connect(self.random_clicked) #connects to push button to random method
         model_button = QPushButton("Model")
         subgrid.addWidget(model_button,2,0)
         recognise_button = QPushButton("Recognise")
         subgrid.addWidget(recognise_button,3,0)
         grid.addWidget(subwidget,1,1)
+        recognise_button.clicked.connect(self.recognise_clicked) #connects to push button to recognise method
     
 
         self.setWindowTitle('Digit Recogniser')
@@ -113,6 +118,24 @@ class ProjectGUI(QMainWindow):
         self.drawing_box.setPixmap(self.canvas)
         # Prints a statement - can be removed later
         print("Clear button clicked")
+    
+    def random_clicked(self):
+        trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
+        dataiter = iter(trainloader) # creating a iterator
+        images, labels = dataiter.next() # creating images for image and lables for image number (0 to 9) 
+        #print(images.shape)
+        #print(labels.shape)
+        plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
+        plt.axis('off')
+        plt.savefig("drawnimage.png")
+
+    def recognise_clicked(self):
+        image = Image.open('drawnimage.png').convert('RGB') # Converts handrawn digit to RGB 
+        image_invert = ImageOps.invert(image) # Inverts the image
+        image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
+        image_invert.save('invertedimage.png') # Saves the new processed image
+
+        #processed_image = np.array(Image.open('drawnimage.png').resize((28,28)))
 
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.

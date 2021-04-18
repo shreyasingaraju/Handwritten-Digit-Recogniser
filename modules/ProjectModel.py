@@ -20,19 +20,23 @@ class ProjModel:
         self.optimizer = optim.SGD(self.net.parameters(), lr=0.01, momentum=0.5)
 
     def downloadTrainSet(self):
-        self.mnist_trainset = datasets.MNIST(root='mnist_data/',
-                               train=True,
-                               transform=transforms.ToTensor(),
-                               download=True)
+        # self.mnist_trainset = datasets.MNIST(root='mnist_data/',
+        #                        train=True,
+        #                        transform=transforms.ToTensor(),
+        #                        download=True)
+
+        self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', train=True, transform=transforms.ToTensor(), download=True)
 
         self.train_loader = data.DataLoader(dataset=self.mnist_trainset,
                                            batch_size=batch_size,
                                            shuffle=True)
 
     def downloadTestSet(self):
-        self.mnist_testset = datasets.MNIST(root='mnist_data/',
-                              train=False,
-                              transform=transforms.ToTensor())
+        # self.mnist_testset = datasets.MNIST(root='mnist_data/',
+        #                       train=False,
+        #                       transform=transforms.ToTensor())
+
+        self.mnist_testset = datasets.MNIST(root='mnist_data_test/', train=False, transform=transforms.ToTensor(), download=True)
 
         self.test_loader = data.DataLoader(dataset=self.mnist_testset,
                                           batch_size=batch_size,

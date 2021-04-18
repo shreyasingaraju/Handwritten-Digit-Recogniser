@@ -134,6 +134,8 @@ class ProjectGUI(QMainWindow):
         imgDialog.exec_()
 
 class TrainDialog(QDialog):
+    cancel_clicked = pyqtSignal
+
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -166,9 +168,6 @@ class TrainDialog(QDialog):
         self.trn_button = QPushButton("Train")
         dl_trn_cncl_grid.addWidget(self.trn_button)
         self.trn_button.clicked.connect(self.train)
-        self.test_button = QPushButton("Test")
-        dl_trn_cncl_grid.addWidget(self.test_button)
-        self.test_button.clicked.connect(self.test)
         self.cncl_button = QPushButton("Cancel")
         dl_trn_cncl_grid.addWidget(self.cncl_button)
         self.cncl_button.clicked.connect(self.cancel)
@@ -200,7 +199,6 @@ class TrainDialog(QDialog):
         # Disable the buttons that aren't meant to be used
         self.dl_mnist_button.setEnabled(False)
         self.trn_button.setEnabled(False)
-        self.test_button.setEnabled(False)
 
         # Re-enable the buttons when the process finishes or cancel is pressed
         self.thread.finished.connect(self.endTrainThread)
@@ -211,23 +209,17 @@ class TrainDialog(QDialog):
         # Accuracy:") # Need to implement accuracy %
 
     def endTrainThread(self):
+        print("endTrainThread called")
         self.dl_mnist_button.setEnabled(True)
         self.trn_button.setEnabled(True)
-        self.test_button.setEnabled(True)
-        self.thread.quit
-        self.worker.deleteLater
-        self.thread.deleteLater
+        self.thread.quit()
+        # self.worker.deleteLater()
+        # self.thread.deleteLater
 
-    def reportProgress(self, epoch):
-        self.textbox.append("Epoch: " + str(epoch))
-        
-    def test(self, s):
-        # Prints text when testing begins
-        self.textbox.append("Testing...")
-        model.testModel()
-        
-        # Accuracy:") # Need to implement accuracy %
-        print("Testing") # Can be removed later
+    def reportProgress(self, result_tuple):
+        self.textbox.append("Epoch: " + str(result_tuple[0] + 1))
+        self.textbox.append("Loss: " + str(result_tuple[1]))
+        self.textbox.append("Accuracy: " + str(result_tuple[2]))
 
     # This method cancels the downloading or training at anytime 
     def cancel(self, s):
@@ -239,14 +231,18 @@ class TrainDialog(QDialog):
 # Adapted from https://realpython.com/python-pyqt-qthread/
 class TrainingWorker(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(int)
+    progress = pyqtSignal(tuple)
 
     def workerTrain(self):
         print("Working...")
         for epoch in range(3):
             model.trainEpoch()
-            self.progress.emit(epoch)
+            # Test the net and put the results in a tuple which is broadcast as a signal back to the TrainDialog textbox
+            test_loss, correct = model.testModel()
+            result_tuple = (epoch, test_loss, correct)
+            self.progress.emit(result_tuple)
         print("Done?")
+        
         self.finished.emit()
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images

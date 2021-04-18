@@ -5,6 +5,8 @@ from torch.utils import data
 from torchvision import datasets, transforms
 import torch.nn.functional as F
 
+from math import trunc
+
 class ProjModel:
     def __init__(self):
         self.device = 'cuda' if cuda.is_available() else 'cpu'
@@ -43,7 +45,6 @@ class ProjModel:
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
-
         print("trainEpoch() finished")
 
     def testModel(self):
@@ -55,14 +56,15 @@ class ProjModel:
             data, target = data.to(self.device), target.to(self.device)
             output = self.net(data)
             # sum up batch loss
-            test_loss += criterion(output, target).item()
+            test_loss += self.criterion(output, target).item()
             # get the index of the max
             pred = output.data.max(1, keepdim=True)[1]
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
         test_loss /= len(self.test_loader.dataset)
-        print(f'===========================\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(self.test_loader.dataset)} '
-            f'({100. * correct / len(self.test_loader.dataset):.0f}%)')
+    
+        correct = 100 * correct / len(self.test_loader.dataset)
+        return test_loss, trunc(correct.item())
         
 
 class Net(nn.Module):

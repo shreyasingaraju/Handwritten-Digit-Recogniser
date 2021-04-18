@@ -123,19 +123,23 @@ class ProjectGUI(QMainWindow):
 
     # This method is called when 'View Training Images' is pressed
     def viewTrainingImagesDialog(self):
-        imgDialog  = ImagesDialog()
-        imgDialog.setMode('train')
-        imgDialog.exec_()
+        try:
+            imgDialog  = ImagesDialog()
+            imgDialog.setMode('train')
+            imgDialog.exec_()
+        except AttributeError:
+            print("Dataset not downloaded. Go to file>Train Model")
 
     # This method is called when 'View Testing Images' is pressed
     def viewTestingImagesDialog(self):
-        imgDialog  = ImagesDialog()
-        imgDialog.setMode('test')
-        imgDialog.exec_()
+        try:
+            imgDialog  = ImagesDialog()
+            imgDialog.setMode('test')
+            imgDialog.exec_()
+        except AttributeError:
+            print("Dataset not downloaded. Go to file>Train Model")
 
 class TrainDialog(QDialog):
-    cancel_clicked = pyqtSignal
-
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -187,7 +191,6 @@ class TrainDialog(QDialog):
     def train(self, s):
         # Prints text when training begins NOTE: currently the textbox.append gets run after TrainModel() finishes somehow?
         self.textbox.append("Training...")
-
         self.thread = QThread()
         self.worker = TrainingWorker()
         self.worker.moveToThread(self.thread)
@@ -203,7 +206,6 @@ class TrainDialog(QDialog):
         # Re-enable the buttons when the process finishes or cancel is pressed
         self.thread.finished.connect(self.endTrainThread)
         self.cncl_button.clicked.connect(self.endTrainThread)
-
         # Start the thread
         self.thread.start()
         # Accuracy:") # Need to implement accuracy %
@@ -214,7 +216,7 @@ class TrainDialog(QDialog):
         self.trn_button.setEnabled(True)
         self.thread.quit()
         # self.worker.deleteLater()
-        # self.thread.deleteLater
+        # self.thread.deleteLater()
 
     def reportProgress(self, result_tuple):
         self.textbox.append("Epoch: " + str(result_tuple[0] + 1))
@@ -232,6 +234,7 @@ class TrainDialog(QDialog):
 class TrainingWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(tuple)
+    
 
     def workerTrain(self):
         print("Working...")
@@ -241,8 +244,7 @@ class TrainingWorker(QObject):
             test_loss, correct = model.testModel()
             result_tuple = (epoch, test_loss, correct)
             self.progress.emit(result_tuple)
-        print("Done?")
-        
+        print("Done")
         self.finished.emit()
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images

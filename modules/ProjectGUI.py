@@ -6,6 +6,7 @@ from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 import torch
 import torchvision
 import torchvision.datasets as datasets
+from torchvision import transforms
 
 import matplotlib.pyplot as plot
 import matplotlib.pyplot as plt
@@ -129,10 +130,12 @@ class ProjectGUI(QMainWindow):
         plt.savefig("drawnimage.png")
 
     def recognise_clicked(self):
-        image = Image.open('drawnimage.png')
-        processed_image = image.resize((28, 28))
-        processed_image = ImageOps.invert(processed_image)
-        processed_image.save('processedimage.png')
+        image = Image.open('drawnimage.png').convert('RGB') # Converts handrawn digit to RGB 
+        image_invert = ImageOps.invert(image) # Inverts the image
+        image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
+        image_invert.save('invertedimage.png') # Saves the new processed image
+
+        #processed_image = np.array(Image.open('drawnimage.png').resize((28,28)))
 
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.

@@ -9,6 +9,10 @@ from math import trunc
 
 class ProjModel:
     def __init__(self):
+        global batch_size
+        batch_size = 64
+        global num_epochs
+        num_epochs = 3
         self.device = 'cuda' if cuda.is_available() else 'cpu'
         self.net = Net()
         self.net.to(self.device)
@@ -22,7 +26,7 @@ class ProjModel:
                                download=True)
 
         self.train_loader = data.DataLoader(dataset=self.mnist_trainset,
-                                           batch_size=64,
+                                           batch_size=batch_size,
                                            shuffle=True)
 
     def downloadTestSet(self):
@@ -31,7 +35,7 @@ class ProjModel:
                               transform=transforms.ToTensor())
 
         self.test_loader = data.DataLoader(dataset=self.mnist_testset,
-                                          batch_size=64,
+                                          batch_size=batch_size,
                                           shuffle=False)
       
 

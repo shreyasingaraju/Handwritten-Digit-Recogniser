@@ -223,7 +223,7 @@ class TrainDialog(QDialog):
         self.textbox.append("Loss: " + str(result_tuple[1]))
         self.textbox.append("Accuracy: " + str(result_tuple[2]))
 
-    # This method cancels the downloading or training at anytime 
+    # This method cancels the training/testing at any time 
     def cancel(self, s):
         # Clears dialog box when cancelled
         self.textbox.clear()
@@ -238,7 +238,7 @@ class TrainingWorker(QObject):
 
     def workerTrain(self):
         print("Working...")
-        for epoch in range(3):
+        for epoch in range(num_epochs):
             model.trainEpoch()
             # Test the net and put the results in a tuple which is broadcast as a signal back to the TrainDialog textbox
             test_loss, correct = model.testModel()

@@ -187,6 +187,8 @@ class TrainDialog(QDialog):
 
         # Added progress bar
         self.pbar = QProgressBar(self)
+        self.pbar.setMaximum(100)
+        self.pbar.setMinimum(0)
         self.layout.addWidget(self.pbar)
 
         # This block provides buttons for downloading the dataset, training and closing the window and arranges them into a horizontal grid
@@ -228,6 +230,9 @@ class TrainDialog(QDialog):
             self.thread.started.connect(self.worker.workerTrain)
             self.worker.progress.connect(self.reportProgress)
             self.thread.finished.connect(self.cancel)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
 
             # Disable the buttons that aren't meant to be used
             self.dl_mnist_button.setEnabled(False)
@@ -239,11 +244,11 @@ class TrainDialog(QDialog):
         except AttributeError:
             print("Please download MNIST first")
 
-
     def reportProgress(self, result_tuple):
         self.textbox.append("Epoch: " + str(result_tuple[0] + 1))
         self.textbox.append("Loss: " + str(result_tuple[1]))
         self.textbox.append("Accuracy: " + str(result_tuple[2]))
+        self.pbar.setValue((result_tuple[0] + 1)* 100 / num_epochs)
 
     # This method cancels the training/testing at any time 
     def cancel(self):
@@ -253,9 +258,7 @@ class TrainDialog(QDialog):
             print("Setting cancel flag to True")
             model.setCancelFlag(True)
             print(model.cancel_flag)
-            self.worker.finished.connect(self.thread.quit)
-            # self.worker.finished.connect(self.worker.deleteLater)
-            self.thread.finished.connect(self.thread.deleteLater)
+            
             self.dl_mnist_button.setEnabled(True)
             self.trn_button.setEnabled(True)
         except AttributeError:
@@ -267,10 +270,11 @@ class TrainDialog(QDialog):
 class TrainingWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(tuple)
+    update = pyqtSignal
     
 
     def workerTrain(self):
-
+        global num_epochs
         num_epochs = 2
 
         for epoch in range(num_epochs):

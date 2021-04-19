@@ -30,12 +30,18 @@ class ProjModel:
         #                        train=True,
         #                        transform=transforms.ToTensor(),
         #                        download=True)
+        try:
+            self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', train=True, transform=transforms.ToTensor(), download=True)
+        except:
+            print("Couldn't download trainset, try again")
 
-        self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', train=True, transform=transforms.ToTensor(), download=True)
+        try:
+            self.train_loader = data.DataLoader(dataset=self.mnist_trainset,
+                                                batch_size=batch_size,
+                                                shuffle=True)
+        except:
+            print("Couldn't download testset, try again")
 
-        self.train_loader = data.DataLoader(dataset=self.mnist_trainset,
-                                           batch_size=batch_size,
-                                           shuffle=True)
 
     def downloadTestSet(self):
         # self.mnist_testset = datasets.MNIST(root='mnist_data/',
@@ -85,8 +91,10 @@ class ProjModel:
         return test_loss, trunc(correct.item())
         
     def predictDigit(self, image):
-        tensorImage = torch.from_numpy(np.asarray(image))
-        output = self.net(tensorImage)
+        imArray = np.array(image).astype("float32")
+        imArray /= 255
+        imTensor = torch.from_numpy(imArray)
+        output = self.net(imTensor)
         print(output)
 
 class Net(nn.Module):

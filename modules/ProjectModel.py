@@ -3,7 +3,9 @@ from PyQt5.QtCore import pyqtSignal
 from torch import nn, optim, cuda
 from torch.utils import data
 from torchvision import datasets, transforms
+import torch.nn
 import torch.nn.functional as F
+import numpy as np
 
 from math import trunc
 
@@ -11,13 +13,17 @@ class ProjModel:
     def __init__(self):
         global batch_size
         batch_size = 64
-        global num_epochs
-        num_epochs = 3
+        self.setCancelFlag(False)
+    
         self.device = 'cuda' if cuda.is_available() else 'cpu'
         self.net = Net()
         self.net.to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.net.parameters(), lr=0.01, momentum=0.5)
+
+    def setCancelFlag(self, flag):
+        print("Setting cancel flag to " + str(flag))
+        self.cancel_flag = flag
 
     def downloadTrainSet(self):
         # self.mnist_trainset = datasets.MNIST(root='mnist_data/',
@@ -47,6 +53,10 @@ class ProjModel:
         print("trainEpoch called")       
         self.net.train()
         for batch_idx, (data, target) in enumerate(self.train_loader):
+            if self.cancel_flag == True:
+                print("Break in trainEpoch")
+                break
+
             data, target = data.to(self.device), target.to(self.device)
             self.optimizer.zero_grad()
             output = self.net(data)
@@ -74,6 +84,10 @@ class ProjModel:
         correct = 100 * correct / len(self.test_loader.dataset)
         return test_loss, trunc(correct.item())
         
+    def predictDigit(self, image):
+        tensorImage = torch.from_numpy(np.asarray(image))
+        output = self.net(tensorImage)
+        print(output)
 
 class Net(nn.Module):
     def __init__(self):

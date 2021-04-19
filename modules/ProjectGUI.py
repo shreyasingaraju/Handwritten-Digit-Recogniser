@@ -15,6 +15,8 @@ from PIL import Image, ImageOps
 
 from modules.ProjectModel import ProjModel
 
+# The ProjectGUI class is the main window of the application, and contains the drawing and recognising interface, 
+# as well as a menubar which lets the user open the other dialog boxes for training and viewing
 class ProjectGUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -135,7 +137,7 @@ class ProjectGUI(QMainWindow):
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
         image_invert.save('invertedimage.png') # Saves the new processed image
 
-        #processed_image = np.array(Image.open('drawnimage.png').resize((28,28)))
+        model.predictDigit(image_invert)
 
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.
@@ -162,6 +164,8 @@ class ProjectGUI(QMainWindow):
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
 
+# TrainDialog is opened when the user selects Train Model from the file menubar.
+# It allows the user to download MNIST, select and load or train the model (NOTE: implement switching models)
 class TrainDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -212,34 +216,29 @@ class TrainDialog(QDialog):
 
     # This method trains the DNN Model using the dataset
     def train(self, s):
-        # Prints text when training begins NOTE: currently the textbox.append gets run after TrainModel() finishes somehow?
-        self.textbox.append("Training...")
-        self.thread = QThread()
-        self.worker = TrainingWorker()
-        self.worker.moveToThread(self.thread)
+        model.setCancelFlag(False)
+        try:
+            # Prints text when training begins NOTE: currently the textbox.append gets run after TrainModel() finishes somehow?
+            self.textbox.append("Training...")
+            self.thread = QThread()
+            self.worker = TrainingWorker()
+            self.worker.moveToThread(self.thread)
 
-        # Connect signals and slots here
-        self.thread.started.connect(self.worker.workerTrain)
-        self.worker.progress.connect(self.reportProgress)
+            # Connect signals and slots here
+            self.thread.started.connect(self.worker.workerTrain)
+            self.worker.progress.connect(self.reportProgress)
+            self.thread.finished.connect(self.cancel)
 
-        # Disable the buttons that aren't meant to be used
-        self.dl_mnist_button.setEnabled(False)
-        self.trn_button.setEnabled(False)
+            # Disable the buttons that aren't meant to be used
+            self.dl_mnist_button.setEnabled(False)
+            self.trn_button.setEnabled(False)
 
-        # Re-enable the buttons when the process finishes or cancel is pressed
-        self.thread.finished.connect(self.endTrainThread)
-        self.cncl_button.clicked.connect(self.endTrainThread)
-        # Start the thread
-        self.thread.start()
-        # Accuracy:") # Need to implement accuracy %
+            # Start the thread
+            self.thread.start()
+            # Accuracy:") # Need to implement accuracy %
+        except AttributeError:
+            print("Please download MNIST first")
 
-    def endTrainThread(self):
-        print("endTrainThread called")
-        self.dl_mnist_button.setEnabled(True)
-        self.trn_button.setEnabled(True)
-        self.thread.quit()
-        # self.worker.deleteLater()
-        # self.thread.deleteLater()
 
     def reportProgress(self, result_tuple):
         self.textbox.append("Epoch: " + str(result_tuple[0] + 1))
@@ -247,9 +246,20 @@ class TrainDialog(QDialog):
         self.textbox.append("Accuracy: " + str(result_tuple[2]))
 
     # This method cancels the training/testing at any time 
-    def cancel(self, s):
+    def cancel(self):
         # Clears dialog box when cancelled
         self.textbox.clear()
+        try:
+            print("Setting cancel flag to True")
+            model.setCancelFlag(True)
+            print(model.cancel_flag)
+            self.worker.finished.connect(self.thread.quit)
+            # self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.dl_mnist_button.setEnabled(True)
+            self.trn_button.setEnabled(True)
+        except AttributeError:
+            print("Cancel clicked before model downloaded, not really an issue")
         print("Canceled") # Can be removed later
 
 # This class is put into a thread and then runs the training so that the user can keep interacting with the GUI during training
@@ -260,15 +270,24 @@ class TrainingWorker(QObject):
     
 
     def workerTrain(self):
-        print("Working...")
+
+        num_epochs = 2
+
         for epoch in range(num_epochs):
+            # Train the network for one epoch
             model.trainEpoch()
             # Test the net and put the results in a tuple which is broadcast as a signal back to the TrainDialog textbox
+            if model.cancel_flag == True:
+                self.finished.emit()
+                print(model.cancel_flag)
+                print("Break in workerTrain")
+                break
             test_loss, correct = model.testModel()
             result_tuple = (epoch, test_loss, correct)
             self.progress.emit(result_tuple)
         print("Done")
         self.finished.emit()
+        print("Finished")
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images
 # The dialog shows 100 images at a time, and can be navigated by clicking Next or Previous to view the next or last 100 images respectively

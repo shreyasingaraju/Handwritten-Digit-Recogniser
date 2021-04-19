@@ -65,15 +65,9 @@ class ProjModel:
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
         test_loss /= len(self.test_loader.dataset)
-<<<<<<< Updated upstream
         print(f'===========================\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(self.test_loader.dataset)} '
             f'({100. * correct / len(self.test_loader.dataset):.0f}%)')
         
-=======
-    
-        correct = 100 * correct / len(self.test_loader.dataset)
-        return test_loss, trunc(correct.item())
->>>>>>> Stashed changes
 
 class Net(nn.Module):
     def __init__(self):

@@ -298,11 +298,7 @@ class TrainingWorker(QObject):
 
     def workerTrain(self):
         print("Working...")
-<<<<<<< Updated upstream
         for epoch in range(3):
-=======
-        for epoch in range(3): # 3 should be num_epochs
->>>>>>> Stashed changes
             model.trainEpoch()
             self.progress.emit(epoch)
         print("Done?")

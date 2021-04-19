@@ -97,6 +97,9 @@ class ProjModel:
         output = self.net(imTensor)
         print(output)
 
+    def loadNet(self, path):
+        self.net.load_state_dict(torch.load(path))
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()

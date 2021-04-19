@@ -1,7 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser
+from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser, QComboBox
 from PyQt5.QtCore import QBasicTimer, QPoint, QThread, pyqtSignal, QObject
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
+from PyQt5.QtGui import *
+from PyQt5.QtCore import Qt
 
 import torch
 import torchvision
@@ -78,20 +80,27 @@ class ProjectGUI(QMainWindow):
         clear_button = QPushButton("Clear")
         subgrid.addWidget(clear_button,0,0)
         clear_button.clicked.connect(self.clear_clicked) #connects to push button to clear method
+
         random_button = QPushButton("Random")
         subgrid.addWidget(random_button,1,0)
         random_button.clicked.connect(self.random_clicked) #connects to push button to random method
-        model_button = QPushButton("Model")
-        subgrid.addWidget(model_button,2,0)
+
+        self.model_button = QComboBox(self)
+        models = ["Model 1", "Model 2", "Model 3", "Model 4"]
+        self.model_button.setEditable(True)
+        self.model_button.addItems(models)
+        # For text center align 
+        line_edit = self.model_button.lineEdit()
+        line_edit.setAlignment(Qt.AlignCenter)
+        line_edit.setReadOnly(True)
+        subgrid.addWidget(self.model_button,2,0)
+
         recognise_button = QPushButton("Recognise")
         subgrid.addWidget(recognise_button,3,0)
         grid.addWidget(subwidget,1,1)
         recognise_button.clicked.connect(self.recognise_clicked) #connects to push button to recognise method
-    
-
         self.setWindowTitle('Digit Recogniser')
         self.setGeometry(300, 300, 300, 200)
-
         self.show()
 
     # In order to draw numbers such as 4 we have to be able to "lift the pen" off of the canvas
@@ -131,13 +140,18 @@ class ProjectGUI(QMainWindow):
         plt.axis('off')
         plt.savefig("drawnimage.png")
 
+    def model_clicked(self):
+        # Connect to loading
+        print("nothing happens")
+
     def recognise_clicked(self):
         image = Image.open('drawnimage.png').convert('RGB') # Converts handrawn digit to RGB 
         image_invert = ImageOps.invert(image) # Inverts the image
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
         image_invert.save('invertedimage.png') # Saves the new processed image
-        model.predictDigit(image_invert)
 
+        model.predictDigit(image_invert)
+        
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.
     def trainModelDialog(self, s):

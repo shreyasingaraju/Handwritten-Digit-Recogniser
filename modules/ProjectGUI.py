@@ -28,6 +28,7 @@ class ProjectGUI(QMainWindow):
         # Make a model instance which contains the datasets and training data
         global model
         model = ProjModel()
+        
 
         grid = QGridLayout()
         window = QWidget(self)
@@ -89,6 +90,9 @@ class ProjectGUI(QMainWindow):
         models = ["Model 1", "Model 2", "Model 3", "Model 4"]
         self.model_button.setEditable(True)
         self.model_button.addItems(models)
+        self.model_button.currentIndexChanged.connect(lambda: self.load(models[self.model_button.currentIndex()]))
+        # Load the first model by default
+        model.loadNet(models[0])
         # For text center align 
         line_edit = self.model_button.lineEdit()
         line_edit.setAlignment(Qt.AlignCenter)
@@ -177,6 +181,9 @@ class ProjectGUI(QMainWindow):
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
 
+    def load(self, path):
+        model.loadNet(path)
+
 # TrainDialog is opened when the user selects Train Model from the file menubar.
 # It allows the user to download MNIST, select and load or train the model (NOTE: implement switching models)
 class TrainDialog(QDialog):
@@ -187,7 +194,6 @@ class TrainDialog(QDialog):
     def initUI(self):
         # modelPath is the path to the saved state_dict of the model to be passed into load()
         # TODO: implement switching this model using a combo box
-        self.modelPath = 'myNet'
 
         self.setModal(True)
         self.setWindowTitle("Dialog")
@@ -197,7 +203,7 @@ class TrainDialog(QDialog):
         self.setGeometry(300, 300,300, 300)
 
         # Added text box in dialog window
-        self.text = " "
+        self.text = "Welcome"
         self.textbox = QTextBrowser(self)
         self.layout.addWidget(self.textbox)
         self.textbox.setText(self.text)
@@ -225,11 +231,7 @@ class TrainDialog(QDialog):
         self.cncl_button = QPushButton("Cancel")
         button_grid.addWidget(self.cncl_button)
         self.cncl_button.clicked.connect(self.cancel)
-        
-        # Load button, loads the currently selected model
-        self.load_button = QPushButton("Load")
-        button_grid.addWidget(self.load_button)
-        self.cncl_button.clicked.connect(lambda: self.load(self.modelPath))
+        self.cncl_button.clicked.connect(self.textbox.clear)
 
         # Add the buttons to the overall layout of the dialog
         self.layout.addWidget(button_widg)
@@ -282,8 +284,7 @@ class TrainDialog(QDialog):
 
     # This method cancels the training/testing at any time 
     def cancel(self):
-        # Clears dialog box when cancelled
-        self.textbox.clear()
+
         try:
             model.setCancelFlag(True)
             self.dl_mnist_button.setEnabled(True)
@@ -291,8 +292,6 @@ class TrainDialog(QDialog):
         except AttributeError:
             print("Cancel clicked before model downloaded, not really an issue")
 
-    def load(self, path):
-        model.loadNet(path)
 # This class is moved into a thread and then runs the training so that the user can keep interacting with the GUI during training
 # Adapted from https://realpython.com/python-pyqt-qthread/
 class TrainingWorker(QObject):
@@ -319,7 +318,7 @@ class TrainingWorker(QObject):
             self.progress.emit(result_tuple)
         self.finished.emit()
         print("Finished")
-        torch.save(model.net.state_dict(), 'myNet')
+        torch.save(model.net.state_dict(), 'Model 1')
 
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images

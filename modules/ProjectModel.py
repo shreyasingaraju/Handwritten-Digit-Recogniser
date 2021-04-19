@@ -98,7 +98,11 @@ class ProjModel:
         print(output)
 
     def loadNet(self, path):
-        self.net.load_state_dict(torch.load(path))
+        try:
+            self.net.load_state_dict(torch.load(path))
+            print("Loaded model")
+        except FileNotFoundError:
+            print("Selected model does not exist")
 
 class Net(nn.Module):
     def __init__(self):

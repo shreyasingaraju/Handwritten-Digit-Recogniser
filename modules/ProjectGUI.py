@@ -17,6 +17,8 @@ from PIL import Image, ImageOps
 
 from modules.ProjectModel import ProjModel
 
+# The ProjectGUI class is the main window of the application, and contains the drawing and recognising interface, 
+# as well as a menubar which lets the user open the other dialog boxes for training and viewing
 class ProjectGUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -148,26 +150,7 @@ class ProjectGUI(QMainWindow):
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
         image_invert.save('invertedimage.png') # Saves the new processed image
 
-        #processed_image = np.array(Image.open('drawnimage.png').resize((28,28)))
-        #prediction = QLabel('Class probability')
-        # self.probability = QLabel('Class probability')
-        # filler = QPixmap('drawnimage.png')
-        # self.probability.setPixmap(filler)
-        # self.subgrid.addWidget(probability,4,0)
-        # self.update()
-        # self.drawing_box = QLabel()
-        # grid.addWidget(self.drawing_box,1,0)
-        # self.pen = QPen()
-        # self.pen.setWidth(5)
-        # self.probability = QPixmap(50,50)
-        # self.probability.fill(QColor(255,255,255))
-        # self.prediction.setPixmap(self.probability)
-
-        x = ['1', '2', '3']
-        y = [1, 5, 3]
-
-        plt.barh(x, y)
-        plt.show()
+        model.predictDigit(image_invert)
         
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.
@@ -178,22 +161,34 @@ class ProjectGUI(QMainWindow):
 
     # This method is called when 'View Training Images' is pressed
     def viewTrainingImagesDialog(self):
-        imgDialog  = ImagesDialog()
-        imgDialog.setMode('train')
-        imgDialog.exec_()
+        try:
+            imgDialog  = ImagesDialog()
+            imgDialog.setMode('train')
+            imgDialog.exec_()
+        except AttributeError:
+            print("Dataset not downloaded. Go to file>Train Model")
 
     # This method is called when 'View Testing Images' is pressed
     def viewTestingImagesDialog(self):
-        imgDialog  = ImagesDialog()
-        imgDialog.setMode('test')
-        imgDialog.exec_()
+        try:
+            imgDialog  = ImagesDialog()
+            imgDialog.setMode('test')
+            imgDialog.exec_()
+        except AttributeError:
+            print("Dataset not downloaded. Go to file>Train Model")
 
+# TrainDialog is opened when the user selects Train Model from the file menubar.
+# It allows the user to download MNIST, select and load or train the model (NOTE: implement switching models)
 class TrainDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.initUI()
 
     def initUI(self):
+        # modelPath is the path to the saved state_dict of the model to be passed into load()
+        # TODO: implement switching this model using a combo box
+        self.modelPath = 'myNet'
+
         self.setModal(True)
         self.setWindowTitle("Dialog")
 
@@ -209,25 +204,36 @@ class TrainDialog(QDialog):
 
         # Added progress bar
         self.pbar = QProgressBar(self)
+        self.pbar.setMaximum(100)
+        self.pbar.setMinimum(0)
         self.layout.addWidget(self.pbar)
 
         # This block provides buttons for downloading the dataset, training and closing the window and arranges them into a horizontal grid
-        dl_trn_cncl_grid = QHBoxLayout()
-        dl_trn_cncl_widg = QWidget(self)
-        dl_trn_cncl_widg.setLayout(dl_trn_cncl_grid)
+        button_grid = QHBoxLayout()
+        button_widg = QWidget(self)
+        button_widg.setLayout(button_grid)
         self.dl_mnist_button =  QPushButton("Download MNIST")
-        dl_trn_cncl_grid.addWidget(self.dl_mnist_button)
+        button_grid.addWidget(self.dl_mnist_button)
         self.dl_mnist_button.clicked.connect(self.downloadMnist)
+
+
         self.trn_button = QPushButton("Train")
-        dl_trn_cncl_grid.addWidget(self.trn_button)
+        button_grid.addWidget(self.trn_button)
         self.trn_button.clicked.connect(self.train)
-        self.test_button = QPushButton("Test")
-        dl_trn_cncl_grid.addWidget(self.test_button)
-        self.test_button.clicked.connect(self.test)
+
+        # Cancel button, stops the training if it's in progress and clears the textbox
         self.cncl_button = QPushButton("Cancel")
-        dl_trn_cncl_grid.addWidget(self.cncl_button)
+        button_grid.addWidget(self.cncl_button)
         self.cncl_button.clicked.connect(self.cancel)
-        self.layout.addWidget(dl_trn_cncl_widg)
+        
+        # Load button, loads the currently selected model
+        self.load_button = QPushButton("Load")
+        button_grid.addWidget(self.load_button)
+        self.cncl_button.clicked.connect(lambda: self.load(self.modelPath))
+
+        # Add the buttons to the overall layout of the dialog
+        self.layout.addWidget(button_widg)
+        
 
     # This method downloads the MNIST dataset when button is pressed
     def downloadMnist(self, s):
@@ -241,68 +247,80 @@ class TrainDialog(QDialog):
 
     # This method trains the DNN Model using the dataset
     def train(self, s):
-        # Prints text when training begins NOTE: currently the textbox.append gets run after TrainModel() finishes somehow?
-        self.textbox.append("Training...")
+        model.setCancelFlag(False)
+        try:
+            # Prints text when training begins NOTE: currently the textbox.append gets run after TrainModel() finishes somehow?
+            self.textbox.append("Training...")
+            self.thread = QThread()
+            self.worker = TrainingWorker()
+            self.worker.moveToThread(self.thread)
 
-        self.thread = QThread()
-        self.worker = TrainingWorker()
-        self.worker.moveToThread(self.thread)
+            # Connect signals and slots here
+            self.thread.started.connect(self.worker.workerTrain)
+            self.worker.progress.connect(self.reportProgress)
+            self.thread.finished.connect(self.cancel)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
 
-        # Connect signals and slots here
-        self.thread.started.connect(self.worker.workerTrain)
-        self.worker.progress.connect(self.reportProgress)
+            # Disable the buttons that aren't meant to be used
+            self.dl_mnist_button.setEnabled(False)
+            self.trn_button.setEnabled(False)
 
-        # Disable the buttons that aren't meant to be used
-        self.dl_mnist_button.setEnabled(False)
-        self.trn_button.setEnabled(False)
-        self.test_button.setEnabled(False)
+            # Start the thread
+            self.thread.start()
+            # Accuracy:") # Need to implement accuracy %
+        except AttributeError:
+            print("Please download MNIST first")
 
-        # Re-enable the buttons when the process finishes or cancel is pressed
-        self.thread.finished.connect(self.endTrainThread)
-        self.cncl_button.clicked.connect(self.endTrainThread)
+    # This method is called after each epoch, and returns the epoch/loss/accuracy and updates the progress bar
+    def reportProgress(self, result_tuple):
+        self.textbox.append("Epoch: " + str(result_tuple[0] + 1))
+        self.textbox.append("Loss: " + str(result_tuple[1]))
+        self.textbox.append("Accuracy: " + str(result_tuple[2]))
+        self.pbar.setValue((result_tuple[0] + 1)* 100 / num_epochs)
 
-        # Start the thread
-        self.thread.start()
-        # Accuracy:") # Need to implement accuracy %
-
-    def endTrainThread(self):
-        self.dl_mnist_button.setEnabled(True)
-        self.trn_button.setEnabled(True)
-        self.test_button.setEnabled(True)
-        self.thread.quit
-        self.worker.deleteLater
-        self.thread.deleteLater
-
-    def reportProgress(self, epoch):
-        self.textbox.append("Epoch: " + str(epoch))
-        
-    def test(self, s):
-        # Prints text when testing begins
-        self.textbox.append("Testing...")
-        model.testModel()
-        
-        # Accuracy:") # Need to implement accuracy %
-        print("Testing") # Can be removed later
-
-    # This method cancels the downloading or training at anytime 
-    def cancel(self, s):
+    # This method cancels the training/testing at any time 
+    def cancel(self):
         # Clears dialog box when cancelled
         self.textbox.clear()
-        print("Canceled") # Can be removed later
+        try:
+            model.setCancelFlag(True)
+            self.dl_mnist_button.setEnabled(True)
+            self.trn_button.setEnabled(True)
+        except AttributeError:
+            print("Cancel clicked before model downloaded, not really an issue")
 
-# This class is put into a thread and then runs the training so that the user can keep interacting with the GUI during training
+    def load(self, path):
+        model.loadNet(path)
+# This class is moved into a thread and then runs the training so that the user can keep interacting with the GUI during training
 # Adapted from https://realpython.com/python-pyqt-qthread/
 class TrainingWorker(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(int)
+    progress = pyqtSignal(tuple)
+    update = pyqtSignal
+    
 
     def workerTrain(self):
-        print("Working...")
-        for epoch in range(3):
+        global num_epochs
+        num_epochs = 2
+
+        for epoch in range(num_epochs):
+            # Train the network for one epoch
             model.trainEpoch()
-            self.progress.emit(epoch)
-        print("Done?")
+            # Test the net and put the results in a tuple which is broadcast as a signal back to the TrainDialog textbox
+            if model.cancel_flag == True:
+                self.finished.emit()
+                print(model.cancel_flag)
+                print("Break in workerTrain")
+                break
+            test_loss, correct = model.testModel()
+            result_tuple = (epoch, test_loss, correct)
+            self.progress.emit(result_tuple)
         self.finished.emit()
+        print("Finished")
+        torch.save(model.net.state_dict(), 'myNet')
+
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images
 # The dialog shows 100 images at a time, and can be navigated by clicking Next or Previous to view the next or last 100 images respectively

@@ -3,27 +3,45 @@ from PyQt5.QtCore import pyqtSignal
 from torch import nn, optim, cuda
 from torch.utils import data
 from torchvision import datasets, transforms
+import torch.nn
 import torch.nn.functional as F
+import numpy as np
+
+from math import trunc
 
 class ProjModel:
     def __init__(self):
+        global batch_size
+        batch_size = 64
+        self.setCancelFlag(False)
+    
         self.device = 'cuda' if cuda.is_available() else 'cpu'
         self.net = Net()
         self.net.to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.net.parameters(), lr=0.01, momentum=0.5)
 
+    def setCancelFlag(self, flag):
+        print("Setting cancel flag to " + str(flag))
+        self.cancel_flag = flag
+
     def downloadTrainSet(self):
         # self.mnist_trainset = datasets.MNIST(root='mnist_data/',
         #                        train=True,
         #                        transform=transforms.ToTensor(),
         #                        download=True)
+        try:
+            self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', train=True, transform=transforms.ToTensor(), download=True)
+        except:
+            print("Couldn't download trainset, try again")
 
-        self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', train=True, transform=transforms.ToTensor(), download=True)
+        try:
+            self.train_loader = data.DataLoader(dataset=self.mnist_trainset,
+                                                batch_size=batch_size,
+                                                shuffle=True)
+        except:
+            print("Couldn't download testset, try again")
 
-        self.train_loader = data.DataLoader(dataset=self.mnist_trainset,
-                                           batch_size=64,
-                                           shuffle=True)
 
     def downloadTestSet(self):
         # self.mnist_testset = datasets.MNIST(root='mnist_data/',
@@ -33,7 +51,7 @@ class ProjModel:
         self.mnist_testset = datasets.MNIST(root='mnist_data_test/', train=False, transform=transforms.ToTensor(), download=True)
 
         self.test_loader = data.DataLoader(dataset=self.mnist_testset,
-                                          batch_size=64,
+                                          batch_size=batch_size,
                                           shuffle=False)
       
 
@@ -41,13 +59,16 @@ class ProjModel:
         print("trainEpoch called")       
         self.net.train()
         for batch_idx, (data, target) in enumerate(self.train_loader):
+            if self.cancel_flag == True:
+                print("Break in trainEpoch")
+                break
+
             data, target = data.to(self.device), target.to(self.device)
             self.optimizer.zero_grad()
             output = self.net(data)
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
-
         print("trainEpoch() finished")
 
     def testModel(self):
@@ -59,15 +80,25 @@ class ProjModel:
             data, target = data.to(self.device), target.to(self.device)
             output = self.net(data)
             # sum up batch loss
-            test_loss += criterion(output, target).item()
+            test_loss += self.criterion(output, target).item()
             # get the index of the max
             pred = output.data.max(1, keepdim=True)[1]
             correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
         test_loss /= len(self.test_loader.dataset)
-        print(f'===========================\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(self.test_loader.dataset)} '
-            f'({100. * correct / len(self.test_loader.dataset):.0f}%)')
+    
+        correct = 100 * correct / len(self.test_loader.dataset)
+        return test_loss, trunc(correct.item())
         
+    def predictDigit(self, image):
+        imArray = np.array(image).astype("float32")
+        imArray /= 255
+        imTensor = torch.from_numpy(imArray)
+        output = self.net(imTensor)
+        print(output)
+
+    def loadNet(self, path):
+        self.net.load_state_dict(torch.load(path))
 
 class Net(nn.Module):
     def __init__(self):

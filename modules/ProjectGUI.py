@@ -102,14 +102,6 @@ class ProjectGUI(QMainWindow):
         recognise_button = QPushButton("Recognise")
         subgrid.addWidget(recognise_button,3,0)
         grid.addWidget(subwidget,1,1)
-        recognise_button.clicked.connect(self.recognise_clicked) #connects to push button to recognise method
-
-        
-        # probability = QLabel("Class Probability")
-        # plot = QPixmap('invertedimage.png')
-        # probability.setPixmap(plot)
-
-
 
         subgrid.addWidget(QLabel("Class Probability"),4,0)
         self.probability = QLabel()
@@ -117,14 +109,15 @@ class ProjectGUI(QMainWindow):
         self.graph = QPixmap(120,120)
         self.graph.fill(QColor(255,255,255))
         self.probability.setPixmap(self.graph)
+        recognise_button.clicked.connect(self.recognise_clicked) #connects to push button to recognise method
 
-        number = 4 # temp number
-        numbertext = str(number)
-        prediction = QTextBrowser()
-        prediction.setText(numbertext)
-        prediction.setAlignment(Qt.AlignCenter)
-        prediction.setFixedHeight(30)
-        subgrid.addWidget(prediction,6,0)
+        #number = 4 # temp number
+        numbertext = str(" ")
+        self.predictionValue = QTextBrowser()
+        self.predictionValue.setText(numbertext)
+        self.predictionValue.setAlignment(Qt.AlignCenter)
+        self.predictionValue.setFixedHeight(30)
+        subgrid.addWidget(self.predictionValue,6,0)
 
         self.setWindowTitle('Digit Recogniser')
         self.setGeometry(300, 300, 300, 200)
@@ -174,17 +167,28 @@ class ProjectGUI(QMainWindow):
         image_invert.save('invertedimage.png') # Saves the new processed image
 
         model.predictDigit(image_invert)
+        prediction, probabilities = model.predictDigit(image_invert)
+        print(prediction)
+        print(probabilities)
+        #print(classes)
+        background = plt.axes()
+        background.set(facecolor = "white")
+        classes = np.arange(start = 0,stop = 10, step = 1, dtype = None)
+        plt.yticks(np.arange(0, 10, step = 1))
+        #plt.xticks(np.arange(0, 10, step = 1))
+        plt.barh(classes, probabilities)
+        plt.show()
+        plt.savefig('predictionplot.png')
+        predictionimage = Image.open('predictionplot.png')
+        predictionimage = predictionimage.resize((120,120))
+        predictionimage.save('predictionimage.png')
+        self.graph = QPixmap('predictionimage.png')
+        self.probability.setPixmap(self.graph)
+        #self.update()
 
-        #classes = np.arange(start = 0,stop = 10, step = 1, dtype = None)
-        #prediction = np.array([0,0,0,0,0,0,0,8,0,0])
-        # prediction = model.probArray
-        # processeddata = np.squeeze(prediction)
-        # plot(processeddata)
-        # plt.xticks([])
-        # plt.yticks(np.arange(1, 10, step=1))
-        # #print(classes)
-        # plt.barh(classes, prediction)
-        # plt.show()
+        numbertext = str(prediction)
+        self.predictionValue.setText(numbertext)
+        self.predictionValue.setAlignment(Qt.AlignCenter)
         
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.

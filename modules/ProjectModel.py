@@ -112,7 +112,7 @@ class ProjModel:
         print(probArray)
 
         digit = np.argmax(probArray)
-        print("Predicted number is "str(digit))
+        print("Predicted number is " + str(digit))
         return digit, probArray
 
     def loadNet(self, path):

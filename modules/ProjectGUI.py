@@ -68,7 +68,7 @@ class ProjectGUI(QMainWindow):
         self.drawing_box = QLabel()
         grid.addWidget(self.drawing_box,1,0)
         self.pen = QPen()
-        self.pen.setWidth(15)
+        self.pen.setWidth(24)
         self.canvasWidth = 300
         self.canvas = QPixmap(self.canvasWidth,self.canvasWidth)
         self.canvas.fill(QColor(255,255,255))
@@ -88,7 +88,7 @@ class ProjectGUI(QMainWindow):
         random_button.clicked.connect(self.random_clicked) #connects to push button to random method
 
         self.model_button = QComboBox(self)
-        models = ["Model 1", "Model 2", "Model 3", "Model 4"]
+        models = ["default", "with_dropout", "Model 3", "Model 4"]
         self.model_button.setEditable(True)
         self.model_button.addItems(models)
         self.model_button.currentIndexChanged.connect(lambda: self.load(models[self.model_button.currentIndex()]))
@@ -174,15 +174,12 @@ class ProjectGUI(QMainWindow):
             colHasPixel = False
             for row in range(self.canvasWidth):
                 if proImage[row, col] < 128:
-                    # print("row:" + str(row) + "col: " + str(col) + "pixval: " + str(proImage[row,col]))
                     if found_left == False:
                         leftmost_x = col
-                        print("leftmost_x is " + str(leftmost_x))
                         found_left = True
                     colHasPixel = True
             if colHasPixel == False and found_left == True and found_right == False:
                 rightmost_x = row
-                print("rightmost_x is " + str(rightmost_x))
                 found_right = True
 
         # find the rightmost x value again since for some reason it doesn't work in the above code
@@ -192,7 +189,6 @@ class ProjectGUI(QMainWindow):
                 if proImage[row, self.canvasWidth - 1 - col] < 128:
                     if found_right == False:
                         rightmost_x = self.canvasWidth - col - 1
-                        print("rightmost_x is " + str(rightmost_x))
                         found_right = True
 
         slicedWidth = rightmost_x - leftmost_x
@@ -235,8 +231,6 @@ class ProjectGUI(QMainWindow):
         sliceIm = ImageOps.invert(sliceIm)
 
         thumbnailArray = np.array(sliceIm)
-        print("thumbnail shape: ")
-        print(thumbnailArray.shape)
 
         # make a new image with the 4px borders like MNIST has
         borderedImage = np.zeros((28,28))
@@ -253,9 +247,7 @@ class ProjectGUI(QMainWindow):
         # map the thumbnailed image into the centre of the new bordered image
         for row in range(20):
             for col in range(20):
-                # print("row:" + str(row) + " col: " + str(col))
                 if thumbnailArray[row, col] == 255:
-                    # print("found black pixel")
                     borderedImage[row+4, col+4] = 255
 
         borderedImage = Image.fromarray(borderedImage).convert("RGB")
@@ -264,8 +256,6 @@ class ProjectGUI(QMainWindow):
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clear_clicked(self):
         self.drawing_box.setPixmap(self.canvas)
-        # Prints a statement - can be removed later
-        print("Clear button clicked")
     
     def random_clicked(self):
         try:
@@ -386,13 +376,11 @@ class TrainDialog(QDialog):
 
     # This method downloads the MNIST dataset when button is pressed
     def downloadMnist(self, s):
-
-        print("Downloading") # Can be removed later
         self.textbox.append("Downloading train dataset...")
         model.downloadTrainSet()
         self.textbox.append("Downloading test dataset...")
         model.downloadTestSet()
-        self.textbox.append("Done!")
+        self.textbox.append("Datasets loaded")
 
     # This method trains the DNN Model using the dataset
     def train(self, s):
@@ -437,7 +425,7 @@ class TrainDialog(QDialog):
             self.dl_mnist_button.setEnabled(True)
             self.trn_button.setEnabled(True)
         except AttributeError:
-            print("Cancel clicked before model downloaded, not really an issue")
+            pass
 
 # This class is moved into a thread and then runs the training so that the user can keep interacting with the GUI during training
 # Adapted from https://realpython.com/python-pyqt-qthread/
@@ -457,15 +445,12 @@ class TrainingWorker(QObject):
             # Test the net and put the results in a tuple which is broadcast as a signal back to the TrainDialog textbox
             if model.cancel_flag == True:
                 self.finished.emit()
-                print(model.cancel_flag)
-                print("Break in workerTrain")
                 break
             test_loss, correct = model.testModel()
             result_tuple = (epoch, test_loss, correct)
             self.progress.emit(result_tuple)
         self.finished.emit()
-        print("Finished")
-        torch.save(model.net.state_dict(), 'Model 1')
+        torch.save(model.net.state_dict(), 'default')
 
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images

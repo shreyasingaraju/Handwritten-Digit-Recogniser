@@ -22,7 +22,6 @@ class ProjModel:
         self.optimizer = optim.SGD(self.net.parameters(), lr=0.01, momentum=0.5)
 
     def setCancelFlag(self, flag):
-        print("Setting cancel flag to " + str(flag))
         self.cancel_flag = flag
 
     def downloadTrainSet(self):
@@ -55,12 +54,10 @@ class ProjModel:
                                           shuffle=False)
       
 
-    def trainEpoch(self):
-        print("trainEpoch called")       
+    def trainEpoch(self):      
         self.net.train()
         for batch_idx, (data, target) in enumerate(self.train_loader):
             if self.cancel_flag == True:
-                print("Break in trainEpoch")
                 break
 
             data, target = data.to(self.device), target.to(self.device)
@@ -69,7 +66,6 @@ class ProjModel:
             loss = self.criterion(output, target)
             loss.backward()
             self.optimizer.step()
-        print("trainEpoch() finished")
 
     def testModel(self):
         self.net.eval()
@@ -109,10 +105,8 @@ class ProjModel:
 
         # Remove the extra dimensions added earlier
         probArray  = np.squeeze(probArray, 0)
-        print(probArray)
 
         digit = np.argmax(probArray)
-        print("Predicted number is " + str(digit))
         return digit, probArray
 
     def loadNet(self, path):
@@ -136,6 +130,28 @@ class Net(nn.Module):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
         x = F.relu(self.l3(x))
+        x = F.relu(self.l4(x))
+        return self.l5(x)
+
+# The same as the default but with two dropout layers added to reduce overfitting
+class Net2(nn.Module):
+    def __init__(self):
+        super(Net2, self).__init__()
+        self.l1 = nn.Linear(784, 520)
+        self.l2 = nn.Linear(520, 320)
+        self.l3 = nn.Linear(320, 240)
+        self.l4 = nn.Linear(240, 120)
+        self.l5 = nn.Linear(120, 10)
+
+
+# Add dropout
+    def forward(self, x):
+        x = x.view(-1, 784)  # Flatten the data (n, 1, 28, 28)-> (n, 784)
+        x = F.relu(self.l1(x))
+        x = F.dropout(x, 0.5)
+        x = F.relu(self.l2(x))
+        x = F.relu(self.l3(x))
+        x = F.dropout(x, 0.1)
         x = F.relu(self.l4(x))
         return self.l5(x)
         

@@ -530,9 +530,9 @@ class ImagesDialog(QDialog):
                 for j in range(0,9):
                     label = QLabel()
                     if self.mode == 'train':
-                        imgArr = np.squeeze(model.mnist_trainset[i+j + 100 * self.page][0])
+                        imgArr = np.squeeze(model.mnist_trainset[10 * i+j + 100 * self.page][0])
                     elif self.mode == 'test':
-                        imgArr = np.squeeze(model.mnist_testset[i+j + 100 * self.page][0])
+                        imgArr = np.squeeze(model.mnist_testset[10 * i+j + 100 * self.page][0])
                     plot.imsave('temp_img.png', imgArr)
                     img = QPixmap('temp_img.png')
                     label.setPixmap(img)

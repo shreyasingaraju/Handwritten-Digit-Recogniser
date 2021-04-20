@@ -153,12 +153,11 @@ class ProjectGUI(QMainWindow):
     def random_clicked(self):
         trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
         dataiter = iter(trainloader) # creating a iterator
-        images, labels = dataiter.next() # creating images for image and lables for image number (0 to 9) 
-        #print(images.shape)
-        #print(labels.shape)
+        images, labels = dataiter.next() # image and lables for image number (0 to 9) 
         plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
         plt.axis('off')
         plt.savefig("drawnimage.png")
+        plt.clf()
 
     def recognise_clicked(self):
         image = Image.open('drawnimage.png').convert('L') # Converts handrawn digit to grayscale
@@ -166,28 +165,23 @@ class ProjectGUI(QMainWindow):
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
         image_invert.save('invertedimage.png') # Saves the new processed image
 
-        model.predictDigit(image_invert)
-        prediction, probabilities = model.predictDigit(image_invert)
-        print(prediction)
-        print(probabilities)
-        #print(classes)
-        background = plt.axes()
+        prediction, probabilities = model.predictDigit(image_invert) 
+        plt.clf() # Clearing any existing plots
+        background = plt.axes() 
         background.set(facecolor = "white")
-        classes = np.arange(start = 0,stop = 10, step = 1, dtype = None)
-        plt.yticks(np.arange(0, 10, step = 1))
-        #plt.xticks(np.arange(0, 10, step = 1))
-        plt.barh(classes, probabilities)
+        classes = np.arange(start = 0,stop = 10, step = 1, dtype = None) # Setting classes from 0 to 9
+        plt.yticks(np.arange(0, 10, step = 1)) # Setting y-Axis ticks 0 to 9
+        plt.barh(classes, probabilities) # Plotting bar graph with all probabilities 
         plt.show()
         plt.savefig('predictionplot.png')
-        predictionimage = Image.open('predictionplot.png')
-        predictionimage = predictionimage.resize((120,120))
-        predictionimage.save('predictionimage.png')
-        self.graph = QPixmap('predictionimage.png')
-        self.probability.setPixmap(self.graph)
-        #self.update()
+        predictionimage = Image.open('predictionplot.png') # Saving plot as image
+        predictionimage = predictionimage.resize((120,120)) # Resizing plot to show on main window
+        predictionimage.save('predictionimage.png') # Saving the resized image
+        self.graph = QPixmap('predictionimage.png') # Setting image to pixmap on main window
+        self.probability.setPixmap(self.graph) 
 
-        numbertext = str(prediction)
-        self.predictionValue.setText(numbertext)
+        numbertext = str(prediction) # Saving predicted digit as string
+        self.predictionValue.setText(numbertext) # Showing predicted number on main window
         self.predictionValue.setAlignment(Qt.AlignCenter)
         
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model

@@ -69,7 +69,8 @@ class ProjectGUI(QMainWindow):
         grid.addWidget(self.drawing_box,1,0)
         self.pen = QPen()
         self.pen.setWidth(15)
-        self.canvas = QPixmap(280,280)
+        self.canvasWidth = 300
+        self.canvas = QPixmap(self.canvasWidth,self.canvasWidth)
         self.canvas.fill(QColor(255,255,255))
         self.drawing_box.setPixmap(self.canvas)
 
@@ -148,29 +149,30 @@ class ProjectGUI(QMainWindow):
         proImage = arr
 
         # find the columns/rows where the leftmost/rightmost/highest/lowest pixels reside
-        width = 280
         found_top = False
         found_bottom = False
-        for row in range(width):
+        for row in range(self.canvasWidth):
             rowHasPixel = False
-            for col in range(width):
+            for col in range(self.canvasWidth):
                 if proImage[row, col] < 128:
                     if found_top == False:
                         highest_y = row
-                        print("highest_y is " + str(highest_y))
                         found_top = True
                     rowHasPixel = True
                     break
             if rowHasPixel == False and found_top == True and found_bottom == False:
                 lowest_y = row
-                print("lowest_y is " + str(lowest_y))
-                found_bottom = True
 
+                found_bottom = True
+        
+        if found_bottom == False:
+            lowest_y = self.canvasWidth - 1
+    
         found_left = False
         found_right = False
-        for col in range(width):
+        for col in range(self.canvasWidth):
             colHasPixel = False
-            for row in range(width):
+            for row in range(self.canvasWidth):
                 if proImage[row, col] < 128:
                     # print("row:" + str(row) + "col: " + str(col) + "pixval: " + str(proImage[row,col]))
                     if found_left == False:
@@ -185,11 +187,11 @@ class ProjectGUI(QMainWindow):
 
         # find the rightmost x value again since for some reason it doesn't work in the above code
         found_right  = False
-        for col in range(width):
-            for row in range(width):
-                if proImage[row, width - 1 - col] < 128:
+        for col in range(self.canvasWidth):
+            for row in range(self.canvasWidth):
+                if proImage[row, self.canvasWidth - 1 - col] < 128:
                     if found_right == False:
-                        rightmost_x = width - col - 1
+                        rightmost_x = self.canvasWidth - col - 1
                         print("rightmost_x is " + str(rightmost_x))
                         found_right = True
 
@@ -203,9 +205,27 @@ class ProjectGUI(QMainWindow):
                 if proImage[row + highest_y, col + leftmost_x] == 255:
                     sliceArray[row,col] = 255
 
+        # The next problem is that resize() will squash whatever our newly sliced aspect ratio is into a 1:1 image, so 1 is never detected
+        # need to add padding to
+        size = max(slicedWidth, slicedHeight)
+        paddedArray = np.ones((size, size))
+        paddedArray *= 255
+        if slicedWidth < slicedHeight:
+            for row in range(slicedHeight):
+                for col in range(slicedWidth):
+                    if sliceArray[row,col] == 0:
+                        paddedArray[row, int(col + (slicedHeight - slicedWidth) / 2)] = 0
+
+        if slicedWidth > slicedHeight:
+            for row in range(slicedHeight):
+                for col in range(slicedWidth):
+                    if sliceArray[row,col] == 0:
+                        paddedArray[int(row + (slicedWidth - slicedHeight) / 2), col] = 0
+
+                    
         
         # make a "thumbnail" version of the image to get it to the right size for MNIST
-        sliceIm = Image.fromarray(sliceArray).convert("L")
+        sliceIm = Image.fromarray(paddedArray).convert("L")
         sliceIm = ImageOps.invert(sliceIm)
         size = (20,20)
         sliceIm.save('invimage.png')
@@ -213,9 +233,6 @@ class ProjectGUI(QMainWindow):
         # sliceIm.thumbnail(size, Image.ANTIALIAS)
         sliceIm.save('invthumbimage.png')
         sliceIm = ImageOps.invert(sliceIm)
-
-        
-        
 
         thumbnailArray = np.array(sliceIm)
         print("thumbnail shape: ")
@@ -256,12 +273,7 @@ class ProjectGUI(QMainWindow):
         images, labels = dataiter.next() # image and lables for image number (0 to 9) 
         plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
         plt.axis('off')
-<<<<<<< HEAD
         plt.savefig("loadedimage.png")
-=======
-        plt.savefig("drawnimage.png")
-        plt.clf()
->>>>>>> cba26cc8b5a4eaedda01d6ab9be1e277cefb02f4
 
     def recognise_clicked(self):
         image = Image.open('loadedimage.png').convert('L') # Converts handrawn digit to grayscale

@@ -13,7 +13,7 @@ from torchvision import transforms
 import matplotlib.pyplot as plot
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageFilter
 
 from modules.ProjectModel import ProjModel
 
@@ -68,7 +68,7 @@ class ProjectGUI(QMainWindow):
         self.drawing_box = QLabel()
         grid.addWidget(self.drawing_box,1,0)
         self.pen = QPen()
-        self.pen.setWidth(5)
+        self.pen.setWidth(15)
         self.canvas = QPixmap(280,280)
         self.canvas.fill(QColor(255,255,255))
         self.drawing_box.setPixmap(self.canvas)
@@ -142,7 +142,107 @@ class ProjectGUI(QMainWindow):
         # Save the image when the user releases the mouse
         img = QPixmap(self.drawing_box.pixmap())
         img.save("drawnimage.png")
-        print("Saved as drawnimage.png")
+
+        im = Image.open('drawnimage.png').convert("L")
+        arr = np.array(im)
+        proImage = arr
+
+        # find the columns/rows where the leftmost/rightmost/highest/lowest pixels reside
+        width = 280
+        found_top = False
+        found_bottom = False
+        for row in range(width):
+            rowHasPixel = False
+            for col in range(width):
+                if proImage[row, col] < 128:
+                    if found_top == False:
+                        highest_y = row
+                        print("highest_y is " + str(highest_y))
+                        found_top = True
+                    rowHasPixel = True
+                    break
+            if rowHasPixel == False and found_top == True and found_bottom == False:
+                lowest_y = row
+                print("lowest_y is " + str(lowest_y))
+                found_bottom = True
+
+        found_left = False
+        found_right = False
+        for col in range(width):
+            colHasPixel = False
+            for row in range(width):
+                if proImage[row, col] < 128:
+                    # print("row:" + str(row) + "col: " + str(col) + "pixval: " + str(proImage[row,col]))
+                    if found_left == False:
+                        leftmost_x = col
+                        print("leftmost_x is " + str(leftmost_x))
+                        found_left = True
+                    colHasPixel = True
+            if colHasPixel == False and found_left == True and found_right == False:
+                rightmost_x = row
+                print("rightmost_x is " + str(rightmost_x))
+                found_right = True
+
+        # find the rightmost x value again since for some reason it doesn't work in the above code
+        found_right  = False
+        for col in range(width):
+            for row in range(width):
+                if proImage[row, width - 1 - col] < 128:
+                    if found_right == False:
+                        rightmost_x = width - col - 1
+                        print("rightmost_x is " + str(rightmost_x))
+                        found_right = True
+
+        slicedWidth = rightmost_x - leftmost_x
+        slicedHeight = - highest_y + lowest_y
+        sliceArray = np.zeros((slicedHeight + 1, slicedWidth + 1))
+
+        # Cut off the empty borders of the image
+        for row in range(slicedHeight):
+            for col in range(slicedWidth):
+                if proImage[row + highest_y, col + leftmost_x] == 255:
+                    sliceArray[row,col] = 255
+
+        
+        # make a "thumbnail" version of the image to get it to the right size for MNIST
+        sliceIm = Image.fromarray(sliceArray).convert("L")
+        sliceIm = ImageOps.invert(sliceIm)
+        size = (20,20)
+        sliceIm.save('invimage.png')
+        sliceIm = sliceIm.resize(size, Image.NEAREST).filter(ImageFilter.SHARPEN)
+        # sliceIm.thumbnail(size, Image.ANTIALIAS)
+        sliceIm.save('invthumbimage.png')
+        sliceIm = ImageOps.invert(sliceIm)
+
+        
+        
+
+        thumbnailArray = np.array(sliceIm)
+        print("thumbnail shape: ")
+        print(thumbnailArray.shape)
+
+        # make a new image with the 4px borders like MNIST has
+        borderedImage = np.zeros((28,28))
+        # make borders white
+        for row in range(4):
+            for col in range(28):
+                borderedImage[row,col] = 255
+                borderedImage[row + 24, col] = 255
+        for col in range(4):
+            for row in range(28):
+                borderedImage[row,col] = 255
+                borderedImage[row, col + 24] = 255
+
+        # map the thumbnailed image into the centre of the new bordered image
+        for row in range(20):
+            for col in range(20):
+                # print("row:" + str(row) + " col: " + str(col))
+                if thumbnailArray[row, col] == 255:
+                    # print("found black pixel")
+                    borderedImage[row+4, col+4] = 255
+
+        borderedImage = Image.fromarray(borderedImage).convert("RGB")
+        borderedImage.save('loadedimage.png')
     
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clear_clicked(self):
@@ -158,10 +258,10 @@ class ProjectGUI(QMainWindow):
         #print(labels.shape)
         plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
         plt.axis('off')
-        plt.savefig("drawnimage.png")
+        plt.savefig("loadedimage.png")
 
     def recognise_clicked(self):
-        image = Image.open('drawnimage.png').convert('L') # Converts handrawn digit to grayscale
+        image = Image.open('loadedimage.png').convert('L') # Converts handrawn digit to grayscale
         image_invert = ImageOps.invert(image) # Inverts the image
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
         image_invert.save('invertedimage.png') # Saves the new processed image

@@ -268,12 +268,15 @@ class ProjectGUI(QMainWindow):
         print("Clear button clicked")
     
     def random_clicked(self):
-        trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
-        dataiter = iter(trainloader) # creating a iterator
-        images, labels = dataiter.next() # image and lables for image number (0 to 9) 
-        plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
-        plt.axis('off')
-        plt.savefig("loadedimage.png")
+        try:
+            trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
+            dataiter = iter(trainloader) # creating a iterator
+            images, labels = dataiter.next() # image and lables for image number (0 to 9) 
+            plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
+            plt.axis('off')
+            plt.savefig("loadedimage.png")
+        except AttributeError:
+            print("Download MNIST first - go to file>Train Model")
 
     def recognise_clicked(self):
         image = Image.open('loadedimage.png').convert('L') # Converts handrawn digit to grayscale

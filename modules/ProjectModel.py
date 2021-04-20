@@ -92,10 +92,28 @@ class ProjModel:
         
     def predictDigit(self, image):
         imArray = np.array(image).astype("float32")
+
+        # Normalise colour values to be between 0 and 1
         imArray /= 255
+
+        # Convert to tensor and then add two more dimensions to have the right format to be batch-loaded
         imTensor = torch.from_numpy(imArray)
-        output = self.net(imTensor)
-        print(output)
+        imTensor = torch.unsqueeze(imTensor,0)
+        imTensor = torch.unsqueeze(imTensor,0)
+
+        # Feed manipulated image into the model then softmax to normalise the net outputs to between 0 and 1 
+        probArray = F.softmax(self.net(imTensor), 1).detach().numpy()
+
+        # Convert to percentage
+        probArray *= 100 
+
+        # Remove the extra dimensions added earlier
+        probArray  = np.squeeze(probArray, 0)
+        print(probArray)
+
+        digit = np.argmax(probArray)
+        print("Predicted number is "str(digit))
+        return digit, probArray
 
     def loadNet(self, path):
         try:

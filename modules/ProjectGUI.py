@@ -144,12 +144,8 @@ class ProjectGUI(QMainWindow):
         plt.axis('off')
         plt.savefig("drawnimage.png")
 
-    def model_clicked(self):
-        # Connect to loading
-        print("nothing happens")
-
     def recognise_clicked(self):
-        image = Image.open('drawnimage.png').convert('RGB') # Converts handrawn digit to RGB 
+        image = Image.open('drawnimage.png').convert('L') # Converts handrawn digit to grayscale
         image_invert = ImageOps.invert(image) # Inverts the image
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
         image_invert.save('invertedimage.png') # Saves the new processed image
@@ -302,7 +298,7 @@ class TrainingWorker(QObject):
 
     def workerTrain(self):
         global num_epochs
-        num_epochs = 2
+        num_epochs = 10
 
         for epoch in range(num_epochs):
             # Train the network for one epoch

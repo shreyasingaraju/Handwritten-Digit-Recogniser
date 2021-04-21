@@ -262,6 +262,7 @@ class ProjectGUI(QMainWindow):
             trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
             dataiter = iter(trainloader) # creating a iterator
             images, labels = dataiter.next() # image and lables for image number (0 to 9) 
+            plt.clf()
             plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
             plt.axis('off')
             plt.savefig("loadedimage.png")
@@ -280,6 +281,9 @@ class ProjectGUI(QMainWindow):
         background.set(facecolor = "white")
         classes = np.arange(start = 0,stop = 10, step = 1, dtype = None) # Setting classes from 0 to 9
         plt.yticks(np.arange(0, 10, step = 1)) # Setting y-Axis ticks 0 to 9
+        plt.xticks(np.arange(0, 110, step = 10)) # Setting y-Axis ticks 0 to 100
+        plt.ylabel('Class')
+        plt.xlabel('Probability')
         plt.barh(classes, probabilities) # Plotting bar graph with all probabilities 
         plt.show()
         plt.savefig('predictionplot.png')

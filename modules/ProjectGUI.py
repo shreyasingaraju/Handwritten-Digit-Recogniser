@@ -151,6 +151,8 @@ class ProjectGUI(QMainWindow):
         # find the columns/rows where the leftmost/rightmost/highest/lowest pixels reside
         found_top = False
         found_bottom = False
+        highest_y = 0
+        lowest_y = self.canvasWidth - 1
         for row in range(self.canvasWidth):
             rowHasPixel = False
             for col in range(self.canvasWidth):
@@ -165,11 +167,10 @@ class ProjectGUI(QMainWindow):
 
                 found_bottom = True
         
-        if found_bottom == False:
-            lowest_y = self.canvasWidth - 1
-    
         found_left = False
         found_right = False
+        leftmost_x = 0
+        rightmost_x = self.canvasWidth - 1
         for col in range(self.canvasWidth):
             colHasPixel = False
             for row in range(self.canvasWidth):
@@ -283,7 +284,7 @@ class ProjectGUI(QMainWindow):
         plt.yticks(np.arange(0, 10, step = 1)) # Setting y-Axis ticks 0 to 9
         plt.xticks(np.arange(0, 110, step = 10)) # Setting y-Axis ticks 0 to 100
         plt.ylabel('Class')
-        plt.xlabel('Probability')
+        plt.xlabel('Probability %')
         plt.barh(classes, probabilities) # Plotting bar graph with all probabilities 
         plt.show()
         plt.savefig('predictionplot.png')

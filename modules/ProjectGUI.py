@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageOps, ImageFilter
 
-from modules.ProjectModel import ProjModel
+from modules.projectmodel import ProjModel
 
 # The ProjectGUI class is the main window of the application, and contains the drawing and recognising interface, 
 # as well as a menubar which lets the user open the other dialog boxes for training and viewing
@@ -68,8 +68,8 @@ class ProjectGUI(QMainWindow):
         self.drawing_box = QLabel()
         grid.addWidget(self.drawing_box,1,0)
         self.pen = QPen()
-        self.pen.setWidth(24)
-        self.canvasWidth = 300
+        self.pen.setWidth(28)
+        self.canvasWidth = 350
         self.canvas = QPixmap(self.canvasWidth,self.canvasWidth)
         self.canvas.fill(QColor(255,255,255))
         self.drawing_box.setPixmap(self.canvas)
@@ -91,9 +91,10 @@ class ProjectGUI(QMainWindow):
         models = ["default", "with_dropout", "Model 3", "Model 4"]
         self.model_button.setEditable(True)
         self.model_button.addItems(models)
-        self.model_button.currentIndexChanged.connect(lambda: self.load(models[self.model_button.currentIndex()]))
+        self.model_button.currentIndexChanged.connect(lambda: self.load('models\\' + models[self.model_button.currentIndex()]))
+        
         # Load the first model by default
-        model.loadNet(models[0])
+        model.loadNet('models\\' + models[0])
         # For text center align 
         line_edit = self.model_button.lineEdit()
         line_edit.setAlignment(Qt.AlignCenter)
@@ -142,9 +143,10 @@ class ProjectGUI(QMainWindow):
         self.update()
         # Save the image when the user releases the mouse
         img = QPixmap(self.drawing_box.pixmap())
-        img.save("drawnimage.png")
+        img.save("images\drawnimage.png")
 
-        im = Image.open('drawnimage.png').convert("L")
+        # Reopen the image as an Image object
+        im = Image.open('images\drawnimage.png').convert("L")
         arr = np.array(im)
         proImage = arr
 
@@ -225,10 +227,7 @@ class ProjectGUI(QMainWindow):
         sliceIm = Image.fromarray(paddedArray).convert("L")
         sliceIm = ImageOps.invert(sliceIm)
         size = (20,20)
-        sliceIm.save('invimage.png')
         sliceIm = sliceIm.resize(size, Image.NEAREST).filter(ImageFilter.SHARPEN)
-        # sliceIm.thumbnail(size, Image.ANTIALIAS)
-        sliceIm.save('invthumbimage.png')
         sliceIm = ImageOps.invert(sliceIm)
 
         thumbnailArray = np.array(sliceIm)
@@ -252,7 +251,7 @@ class ProjectGUI(QMainWindow):
                     borderedImage[row+4, col+4] = 255
 
         borderedImage = Image.fromarray(borderedImage).convert("RGB")
-        borderedImage.save('loadedimage.png')
+        borderedImage.save('images\loadedimage.png')
     
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clear_clicked(self):
@@ -266,15 +265,14 @@ class ProjectGUI(QMainWindow):
             plt.clf()
             plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
             plt.axis('off')
-            plt.savefig("loadedimage.png")
+            plt.savefig("images\loadedimage.png")
         except AttributeError:
             print("Download MNIST first - go to file>Train Model")
 
     def recognise_clicked(self):
-        image = Image.open('loadedimage.png').convert('L') # Converts handrawn digit to grayscale
+        image = Image.open('images\loadedimage.png').convert('L') # Converts handrawn digit to grayscale
         image_invert = ImageOps.invert(image) # Inverts the image
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
-        image_invert.save('invertedimage.png') # Saves the new processed image
 
         prediction, probabilities = model.predictDigit(image_invert) 
         plt.clf() # Clearing any existing plots
@@ -287,11 +285,11 @@ class ProjectGUI(QMainWindow):
         plt.xlabel('Probability %')
         plt.barh(classes, probabilities) # Plotting bar graph with all probabilities 
         plt.show()
-        plt.savefig('predictionplot.png')
-        predictionimage = Image.open('predictionplot.png') # Saving plot as image
+        plt.savefig('images\predictionplot.png')
+        predictionimage = Image.open('images\predictionplot.png') # Saving plot as image
         predictionimage = predictionimage.resize((120,120)) # Resizing plot to show on main window
-        predictionimage.save('predictionimage.png') # Saving the resized image
-        self.graph = QPixmap('predictionimage.png') # Setting image to pixmap on main window
+        predictionimage.save('images\predictionimage.png') # Saving the resized image
+        self.graph = QPixmap('images\predictionimage.png') # Setting image to pixmap on main window
         self.probability.setPixmap(self.graph) 
 
         numbertext = str(prediction) # Saving predicted digit as string
@@ -455,7 +453,7 @@ class TrainingWorker(QObject):
             result_tuple = (epoch, test_loss, correct)
             self.progress.emit(result_tuple)
         self.finished.emit()
-        torch.save(model.net.state_dict(), 'default')
+        torch.save(model.net.state_dict(), 'models\default')
 
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images
@@ -526,7 +524,7 @@ class ImagesDialog(QDialog):
                         imgArr = np.squeeze(model.mnist_trainset[10 * i+j + 100 * self.page][0])
                     elif self.mode == 'test':
                         imgArr = np.squeeze(model.mnist_testset[10 * i+j + 100 * self.page][0])
-                    plot.imsave('temp_img.png', imgArr)
-                    img = QPixmap('temp_img.png')
+                    plot.imsave('images\temp_img.png', imgArr)
+                    img = QPixmap('images\temp_img.png')
                     label.setPixmap(img)
                     self.grid.addWidget(label, i, j)

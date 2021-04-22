@@ -143,8 +143,7 @@ class Net2(nn.Module):
         self.l4 = nn.Linear(240, 120)
         self.l5 = nn.Linear(120, 10)
 
-
-# Add dropout
+    # Add dropout
     def forward(self, x):
         x = x.view(-1, 784)  # Flatten the data (n, 1, 28, 28)-> (n, 784)
         x = F.relu(self.l1(x))

@@ -81,11 +81,11 @@ class ProjectGUI(QMainWindow):
         subwidget.setLayout(subgrid)
         clear_button = QPushButton("Clear")
         subgrid.addWidget(clear_button,0,0)
-        clear_button.clicked.connect(self.clear_clicked) #connects to push button to clear method
+        clear_button.clicked.connect(self.clearClicked) #connects to push button to clear method
 
         random_button = QPushButton("Random")
         subgrid.addWidget(random_button,1,0)
-        random_button.clicked.connect(self.random_clicked) #connects to push button to random method
+        random_button.clicked.connect(self.randomClicked) #connects to push button to random method
 
         self.model_button = QComboBox(self)
         models = ["default", "with_dropout", "Model 3", "Model 4"]
@@ -111,12 +111,11 @@ class ProjectGUI(QMainWindow):
         self.graph = QPixmap(120,120)
         self.graph.fill(QColor(255,255,255))
         self.probability.setPixmap(self.graph)
-        recognise_button.clicked.connect(self.recognise_clicked) #connects to push button to recognise method
+        recognise_button.clicked.connect(self.recogniseClicked) #connects to push button to recognise method
 
-        #number = 4 # temp number
         numbertext = str(" ")
         self.predictionValue = QTextBrowser()
-        self.predictionValue.setText(numbertext)
+        self.predictionValue.setText("Digit: " + str(numbertext))
         self.predictionValue.setAlignment(Qt.AlignCenter)
         self.predictionValue.setFixedHeight(30)
         subgrid.addWidget(self.predictionValue,6,0)
@@ -254,10 +253,10 @@ class ProjectGUI(QMainWindow):
         borderedImage.save('images\loadedimage.png')
     
     # This method clears drawing on the canvas when 'clear' button is pressed
-    def clear_clicked(self):
+    def clearClicked(self):
         self.drawing_box.setPixmap(self.canvas)
     
-    def random_clicked(self):
+    def randomClicked(self):
         try:
             trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
             dataiter = iter(trainloader) # creating a iterator
@@ -269,7 +268,7 @@ class ProjectGUI(QMainWindow):
         except AttributeError:
             print("Download MNIST first - go to file>Train Model")
 
-    def recognise_clicked(self):
+    def recogniseClicked(self):
         image = Image.open('images\loadedimage.png').convert('L') # Converts handrawn digit to grayscale
         image_invert = ImageOps.invert(image) # Inverts the image
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
@@ -293,7 +292,7 @@ class ProjectGUI(QMainWindow):
         self.probability.setPixmap(self.graph) 
 
         numbertext = str(prediction) # Saving predicted digit as string
-        self.predictionValue.setText(numbertext) # Showing predicted number on main window
+        self.predictionValue.setText("Digit: " + str(numbertext)) # Showing predicted number on main window
         self.predictionValue.setAlignment(Qt.AlignCenter)
         
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
@@ -321,6 +320,7 @@ class ProjectGUI(QMainWindow):
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
 
+    # This function is kinda redundant
     def load(self, path):
         model.loadNet(path)
 

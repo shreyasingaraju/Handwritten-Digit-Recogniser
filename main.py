@@ -23,8 +23,8 @@ if __name__ == '__main__':
 # - Fix "QCoreApplication::exec: The event loop is already running" error when clicking random
 # - Remove image processing code from MouseReleaseEvent, move to model class instead
 # - Add error dialogs instead of printing caught errors to terminal 
-# - Make pen a circle
+# - DONE: Make pen a circle
 # - Test if sharpen filter actually does anything
 # - Check if files are already downloaded?
-# - Clear the existing plotted graph if "random" is clicked
-# - Make the loaded image / digit appear in the pixmap in the lower left instead of the small graph
+# - DONE: Clear the existing plotted graph if "random" is clicked
+# - DONE: Make the loaded image / digit appear in the pixmap in the lower left instead of the small graph

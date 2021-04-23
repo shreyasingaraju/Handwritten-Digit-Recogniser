@@ -128,15 +128,7 @@ class ProjectGUI(QMainWindow):
     # In order to draw numbers such as 4 we have to be able to "lift the pen" off of the canvas
     def mousePressEvent(self, e):
         self.last_point = QPoint(e.x(),e.y())
-
-        # Clears the small loaded image on main window
-        self.graph.fill(QColor(255,255,255))
-        self.probability.setPixmap(self.graph)
-
-        # Clears predicted digit on main window
-        numbertext = str(" ")
-        self.predictionValue.setText("Digit: " + str(numbertext)) 
-        self.predictionValue.setAlignment(Qt.AlignCenter)
+        self.predictionWindowCleared()
 
     # This method is responsible for drawing when the user clicks and drags the mouse
     def mouseMoveEvent(self, e):
@@ -264,19 +256,9 @@ class ProjectGUI(QMainWindow):
     
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clearClicked(self):
-        
-        # Clears drawing canvas on main window
-        self.drawing_box.setPixmap(self.canvas)
+        self.drawingCanvasCleared()
+        self.predictionWindowCleared()
 
-        # Clears the small loaded image on main window
-        self.graph.fill(QColor(255,255,255))
-        self.probability.setPixmap(self.graph)
-
-        # Clears predicted digit on main window
-        numbertext = str(" ")
-        self.predictionValue.setText("Digit: " + str(numbertext)) 
-        self.predictionValue.setAlignment(Qt.AlignCenter)
-    
     def randomClicked(self):
         try:
             trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
@@ -288,17 +270,7 @@ class ProjectGUI(QMainWindow):
             plt.savefig("images\loadedimage.png")
             plt.show()
 
-            # Clears drawing canvas on main window
-            self.drawing_box.setPixmap(self.canvas)
-
-            # Clears the small loaded image on main window
-            self.graph.fill(QColor(255,255,255))
-            self.probability.setPixmap(self.graph)
-
-            # Clears predicted digit on main window
-            numbertext = str(" ")
-            self.predictionValue.setText("Digit: " + str(numbertext)) 
-            self.predictionValue.setAlignment(Qt.AlignCenter)
+            self.clearClicked()
 
         except AttributeError:
             print("Download MNIST first - go to file>Train Model")
@@ -358,6 +330,21 @@ class ProjectGUI(QMainWindow):
     # This function is kinda redundant
     def load(self, path):
         model.loadNet(path)
+     
+    # This function clears the drawing canvas on main window
+    def drawingCanvasCleared(self):
+        self.drawing_box.setPixmap(self.canvas)
+
+    # This function clears the loaded image and predicted digit on main window
+    def predictionWindowCleared(self):
+        # Clears the small loaded image on main window
+        self.graph.fill(QColor(255,255,255))
+        self.probability.setPixmap(self.graph)
+
+        # Clears predicted digit on main window
+        numbertext = str(" ")
+        self.predictionValue.setText("Digit: " + str(numbertext)) 
+        self.predictionValue.setAlignment(Qt.AlignCenter)
 
 # TrainDialog is opened when the user selects Train Model from the file menubar.
 # It allows the user to download MNIST, select and load or train the model (NOTE: implement switching models)

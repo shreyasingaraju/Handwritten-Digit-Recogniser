@@ -69,6 +69,7 @@ class ProjectGUI(QMainWindow):
         grid.addWidget(self.drawing_box,1,0)
         self.pen = QPen()
         self.pen.setWidth(28)
+        self.pen.setCapStyle(Qt.RoundCap)
         self.canvasWidth = 350
         self.canvas = QPixmap(self.canvasWidth,self.canvasWidth)
         self.canvas.fill(QColor(255,255,255))
@@ -127,6 +128,15 @@ class ProjectGUI(QMainWindow):
     # In order to draw numbers such as 4 we have to be able to "lift the pen" off of the canvas
     def mousePressEvent(self, e):
         self.last_point = QPoint(e.x(),e.y())
+
+        # Clears the small loaded image on main window
+        self.graph.fill(QColor(255,255,255))
+        self.probability.setPixmap(self.graph)
+
+        # Clears predicted digit on main window
+        numbertext = str(" ")
+        self.predictionValue.setText("Digit: " + str(numbertext)) 
+        self.predictionValue.setAlignment(Qt.AlignCenter)
 
     # This method is responsible for drawing when the user clicks and drags the mouse
     def mouseMoveEvent(self, e):
@@ -254,6 +264,8 @@ class ProjectGUI(QMainWindow):
     
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clearClicked(self):
+        
+        # Clears drawing canvas on main window
         self.drawing_box.setPixmap(self.canvas)
 
         # Clears the small loaded image on main window
@@ -274,6 +286,20 @@ class ProjectGUI(QMainWindow):
             plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
             plt.axis('off')
             plt.savefig("images\loadedimage.png")
+            plt.show()
+
+            # Clears drawing canvas on main window
+            self.drawing_box.setPixmap(self.canvas)
+
+            # Clears the small loaded image on main window
+            self.graph.fill(QColor(255,255,255))
+            self.probability.setPixmap(self.graph)
+
+            # Clears predicted digit on main window
+            numbertext = str(" ")
+            self.predictionValue.setText("Digit: " + str(numbertext)) 
+            self.predictionValue.setAlignment(Qt.AlignCenter)
+
         except AttributeError:
             print("Download MNIST first - go to file>Train Model")
 

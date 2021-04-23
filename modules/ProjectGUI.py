@@ -255,6 +255,15 @@ class ProjectGUI(QMainWindow):
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clearClicked(self):
         self.drawing_box.setPixmap(self.canvas)
+
+        # Clears the small loaded image on main window
+        self.graph.fill(QColor(255,255,255))
+        self.probability.setPixmap(self.graph)
+
+        # Clears predicted digit on main window
+        numbertext = str(" ")
+        self.predictionValue.setText("Digit: " + str(numbertext)) 
+        self.predictionValue.setAlignment(Qt.AlignCenter)
     
     def randomClicked(self):
         try:
@@ -284,9 +293,9 @@ class ProjectGUI(QMainWindow):
         plt.xlabel('Probability %')
         plt.barh(classes, probabilities) # Plotting bar graph with all probabilities 
         plt.show()
-        plt.savefig('images\predictionplot.png')
-        predictionimage = Image.open('images\predictionplot.png') # Saving plot as image
-        predictionimage = predictionimage.resize((120,120)) # Resizing plot to show on main window
+        plt.savefig('images\predictionplot.png') # Saving plot as image
+        predictionimage = Image.open('images\loadedimage.png') # Opening the loaded image 
+        predictionimage = predictionimage.resize((120,120)) # Resizing loaded image to show on main window
         predictionimage.save('images\predictionimage.png') # Saving the resized image
         self.graph = QPixmap('images\predictionimage.png') # Setting image to pixmap on main window
         self.probability.setPixmap(self.graph) 

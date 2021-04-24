@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMainWindow, QAction, qApp, QTextBrowser, QComboBox
+from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMessageBox, QMainWindow, QAction, qApp, QTextBrowser, QComboBox
 from PyQt5.QtCore import QBasicTimer, QPoint, QThread, pyqtSignal, QObject
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 from PyQt5.QtGui import *
@@ -127,19 +127,17 @@ class ProjectGUI(QMainWindow):
         self.setWindowTitle('Digit Recogniser')
         self.setGeometry(300, 300, 300, 200)
         self.show()
-
-    
-
-        
-    
-    # This method clears drawing on the canvas when 'clear' button is pressed
+ 
+    # This method clears both the canvas and the prediction window
     def clearClicked(self):
         self.drawingCanvasCleared()
         self.predictionWindowCleared()
 
+    # Picks an image from the shuffled test set, saves it and tells the model to process it
     def randomClicked(self):
         try:
-            trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
+            # Load the test dataset and shuffle it to be random
+            trainloader = torch.utils.data.DataLoader(model.mnist_testset, batch_size=64, shuffle=True)
             dataiter = iter(trainloader)
             images, labels = dataiter.next() # image and labels for image number (0 to 9) 
             plt.clf()
@@ -154,8 +152,9 @@ class ProjectGUI(QMainWindow):
             self.clearClicked()
 
         except AttributeError:
-            print("Download MNIST first - go to file>Train Model")
+            self.error_box = ErrorDialog("Download MNIST first - go to file>Train Model") 
 
+    # Tells the model to predict the digit, and then generates a bar graph showing the probability distrubution
     def recogniseClicked(self):
         image = Image.open('images\loadedimage.png').convert('L')
 
@@ -199,6 +198,7 @@ class ProjectGUI(QMainWindow):
             self.imgDialog.show()
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
+            self.error_box = ErrorDialog("Dataset not downloaded. Go to file>Train Model")
 
     # This method is called when 'View Testing Images' is pressed
     def viewTestingImagesDialog(self):
@@ -208,6 +208,7 @@ class ProjectGUI(QMainWindow):
             self.imgDialog.show()
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
+            self.error_box = ErrorDialog("Dataset not downloaded. Go to file>Train Model")
      
     # This function clears the drawing canvas on main window
     def drawingCanvasCleared(self):
@@ -221,12 +222,12 @@ class ProjectGUI(QMainWindow):
 
         # Clears predicted digit on main window
         numbertext = str(" ")
-        self.predictionValue.setText("Digit: " + str(numbertext)) 
+        self.predictionValue.setText("Recognised digit: " + str(numbertext)) 
         self.predictionValue.setAlignment(Qt.AlignCenter)
 
 
 # DrawingBox is a subclass of QLabel that implements the drawing box function so that users can draw their own digits
-# The drawn image is saved and processed every time
+# The drawn image is saved and processed every time the user lifts the pen
 class DrawingBox(QLabel):
     def __init__(self, parent):
         super().__init__()
@@ -298,15 +299,13 @@ class TrainDialog(QDialog):
         self.pbar.setMinimum(0)
         self.layout.addWidget(self.pbar)
 
-        # This block provides buttons for downloading the dataset, training and closing the window and arranges them into a horizontal grid
+        # Make buttons and arrange into a horizontal grid
         button_grid = QHBoxLayout()
         button_widg = QWidget(self)
         button_widg.setLayout(button_grid)
         self.dl_mnist_button =  QPushButton("Download MNIST")
         button_grid.addWidget(self.dl_mnist_button)
         self.dl_mnist_button.clicked.connect(self.downloadMnist)
-
-
         self.trn_button = QPushButton("Train")
         button_grid.addWidget(self.trn_button)
         self.trn_button.clicked.connect(self.train)
@@ -315,7 +314,6 @@ class TrainDialog(QDialog):
         self.cncl_button = QPushButton("Cancel")
         button_grid.addWidget(self.cncl_button)
         self.cncl_button.clicked.connect(self.cancel)
-        self.cncl_button.clicked.connect(self.textbox.clear)
 
         # Add the buttons to the overall layout of the dialog
         self.layout.addWidget(button_widg)
@@ -339,7 +337,7 @@ class TrainDialog(QDialog):
             self.worker = TrainingWorker()
             self.worker.moveToThread(self.thread)
 
-            # Connect signals and slots here
+            # Connect signals and slots
             self.thread.started.connect(self.worker.workerTrain)
             self.worker.progress.connect(self.reportProgress)
             self.thread.finished.connect(self.cancel)
@@ -351,11 +349,10 @@ class TrainDialog(QDialog):
             self.dl_mnist_button.setEnabled(False)
             self.trn_button.setEnabled(False)
 
-            # Start the thread
             self.thread.start()
-            # Accuracy:") # Need to implement accuracy %
         except AttributeError:
             print("Please download MNIST first")
+            self.error_box = ErrorDialog("Please download MNIST first")
 
     # This method is called after each epoch, and returns the epoch/loss/accuracy and updates the progress bar
     def reportProgress(self, result_tuple):
@@ -364,15 +361,16 @@ class TrainDialog(QDialog):
         self.textbox.append("Accuracy: " + str(result_tuple[2]) + "%")
         self.pbar.setValue((result_tuple[0] + 1)* 100 / num_epochs)
 
-    # This method cancels the training/testing at any time 
+    # Called when cancel button is clicked
     def cancel(self):
-
+        self.textbox.setText("Welcome")
         try:
             model.setCancelFlag(True)
             self.dl_mnist_button.setEnabled(True)
             self.trn_button.setEnabled(True)
         except AttributeError:
-            pass
+            # Attribute error here just means the user clicked cancel before loading the datasets, which isn't a problem so no error message needed
+            pass 
 
 
 # This class is moved into a thread and then runs the training so that the user can keep interacting with the GUI during training
@@ -404,7 +402,6 @@ class TrainingWorker(QObject):
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images
 # The dialog shows 100 images at a time, and can be navigated by clicking Next or Previous to view the next or last 100 images respectively
 class ImagesDialog(QDialog):
-    
     def __init__(self):
         super().__init__()
         
@@ -469,7 +466,25 @@ class ImagesDialog(QDialog):
                         imgArr = np.squeeze(model.mnist_trainset[10 * i+j + 100 * self.page][0])
                     elif self.mode == 'test':
                         imgArr = np.squeeze(model.mnist_testset[10 * i+j + 100 * self.page][0])
-                    plot.imsave(r'images\temp_img.png', imgArr) # r prefix makes it a raw string to avoid \t being taken as a literal
-                    img = QPixmap(r'images\temp_img.png')
+                    plot.imsave('images\\temp_img.png', imgArr)
+                    img = QPixmap('images\\temp_img.png')
                     label.setPixmap(img)
                     self.grid.addWidget(label, i, j)
+
+
+# ErrorDialog is a simple class to implement error dialogs in one line
+# The desired error message is passed in to to init function
+class ErrorDialog(QMessageBox):
+    def __init__(self, error_message):
+        super().__init__()
+        self.initUI(error_message)
+
+    def initUI(self, error_message):
+        self.setWindowTitle("Warning")
+        self.setIcon(QMessageBox.Warning)
+        self.setText(error_message)
+        self.setStandardButtons(QMessageBox.Ok)
+        self.move(325,360)
+
+        self.show()
+

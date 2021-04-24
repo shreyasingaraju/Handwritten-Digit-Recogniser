@@ -28,12 +28,11 @@ class ModelWrapper:
         self.cancel_flag = flag
 
     def downloadTrainSet(self):
-        # self.mnist_trainset = datasets.MNIST(root='mnist_data/',
-        #                        train=True,
-        #                        transform=transforms.ToTensor(),
-        #                        download=True)
         try:
-            self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', train=True, transform=transforms.ToTensor(), download=True)
+            self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', 
+                                                train=True, 
+                                                transform=transforms.ToTensor(), 
+                                                download=True)
         except:
             print("Couldn't download train set, try again")
 
@@ -42,11 +41,11 @@ class ModelWrapper:
                                             shuffle=True)
 
     def downloadTestSet(self):
-        # self.mnist_testset = datasets.MNIST(root='mnist_data/',
-        #                       train=False,
-        #                       transform=transforms.ToTensor())
         try:
-            self.mnist_testset = datasets.MNIST(root='mnist_data_test/', train=False, transform=transforms.ToTensor(), download=True)
+            self.mnist_testset = datasets.MNIST(root='mnist_data_test/', 
+                                                train=False, 
+                                                transform=transforms.ToTensor(), 3
+                                                download=True)
         except:
             print("Couldn't download test set, try again")
 

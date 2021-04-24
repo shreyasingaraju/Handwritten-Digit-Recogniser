@@ -1,8 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 
-from modules.projectmodel import ProjModel
-from modules.projectgui import ProjectGUI
+from modules.project_model import ModelWrapper
+from modules.project_gui import ProjectGUI
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -28,3 +28,5 @@ if __name__ == '__main__':
 # - Check if files are already downloaded?
 # - DONE: Clear the existing plotted graph if "random" is clicked
 # - DONE: Make the loaded image / digit appear in the pixmap in the lower left instead of the small graph
+# - Change randomClicked so that the image is saved in the correct aspect ratio
+# - Move the positions of the main window and plot window so that plot doesn't cover the buttons of main

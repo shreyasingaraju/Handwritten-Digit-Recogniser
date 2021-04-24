@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageOps, ImageFilter
 
-from modules.projectmodel import ProjModel
+from modules.project_model import ModelWrapper
 
 # The ProjectGUI class is the main window of the application, and contains the drawing and recognising interface, 
 # as well as a menubar which lets the user open the other dialog boxes for training and viewing
@@ -27,7 +27,7 @@ class ProjectGUI(QMainWindow):
     def initUI(self):
         # Make a model instance which contains the datasets and training data
         global model
-        model = ProjModel()
+        model = ModelWrapper()
         
 
         grid = QGridLayout()
@@ -70,8 +70,8 @@ class ProjectGUI(QMainWindow):
         self.pen = QPen()
         self.pen.setWidth(28)
         self.pen.setCapStyle(Qt.RoundCap)
-        self.canvasWidth = 350
-        self.canvas = QPixmap(self.canvasWidth,self.canvasWidth)
+        self.canvas_side_length = 350
+        self.canvas = QPixmap(self.canvas_side_length,self.canvas_side_length)
         self.canvas.fill(QColor(255,255,255))
         self.drawing_box.setPixmap(self.canvas)
 
@@ -92,10 +92,10 @@ class ProjectGUI(QMainWindow):
         models = ["default", "with_dropout", "Model 3", "Model 4"]
         self.model_button.setEditable(True)
         self.model_button.addItems(models)
-        self.model_button.currentIndexChanged.connect(lambda: self.load('models\\' + models[self.model_button.currentIndex()]))
+        self.model_button.currentIndexChanged.connect(lambda: model.loadModel('models\\' + models[self.model_button.currentIndex()]))
         
         # Load the first model by default
-        model.loadNet('models\\' + models[0])
+        model.loadModel('models\\' + models[0])
         # For text center align 
         line_edit = self.model_button.lineEdit()
         line_edit.setAlignment(Qt.AlignCenter)
@@ -144,115 +144,12 @@ class ProjectGUI(QMainWindow):
         self.update()
         # Save the image when the user releases the mouse
         img = QPixmap(self.drawing_box.pixmap())
-        img.save("images\drawnimage.png")
+        img.save("images\loadedimage.png")
 
-        # Reopen the image as an Image object
-        im = Image.open('images\drawnimage.png').convert("L")
-        arr = np.array(im)
-        proImage = arr
+        # Tells the model class to process the image we just saved
+        model.processDrawnImage(self.canvas_side_length)
 
-        # find the columns/rows where the leftmost/rightmost/highest/lowest pixels reside
-        found_top = False
-        found_bottom = False
-        highest_y = 0
-        lowest_y = self.canvasWidth - 1
-        for row in range(self.canvasWidth):
-            rowHasPixel = False
-            for col in range(self.canvasWidth):
-                if proImage[row, col] < 128:
-                    if found_top == False:
-                        highest_y = row
-                        found_top = True
-                    rowHasPixel = True
-                    break
-            if rowHasPixel == False and found_top == True and found_bottom == False:
-                lowest_y = row
-
-                found_bottom = True
         
-        found_left = False
-        found_right = False
-        leftmost_x = 0
-        rightmost_x = self.canvasWidth - 1
-        for col in range(self.canvasWidth):
-            colHasPixel = False
-            for row in range(self.canvasWidth):
-                if proImage[row, col] < 128:
-                    if found_left == False:
-                        leftmost_x = col
-                        found_left = True
-                    colHasPixel = True
-            if colHasPixel == False and found_left == True and found_right == False:
-                rightmost_x = row
-                found_right = True
-
-        # find the rightmost x value again since for some reason it doesn't work in the above code
-        found_right  = False
-        for col in range(self.canvasWidth):
-            for row in range(self.canvasWidth):
-                if proImage[row, self.canvasWidth - 1 - col] < 128:
-                    if found_right == False:
-                        rightmost_x = self.canvasWidth - col - 1
-                        found_right = True
-
-        slicedWidth = rightmost_x - leftmost_x
-        slicedHeight = - highest_y + lowest_y
-        sliceArray = np.zeros((slicedHeight + 1, slicedWidth + 1))
-
-        # Cut off the empty borders of the image
-        for row in range(slicedHeight):
-            for col in range(slicedWidth):
-                if proImage[row + highest_y, col + leftmost_x] == 255:
-                    sliceArray[row,col] = 255
-
-        # The next problem is that resize() will squash whatever our newly sliced aspect ratio is into a 1:1 image, so 1 is never detected
-        # need to add padding to
-        size = max(slicedWidth, slicedHeight)
-        paddedArray = np.ones((size, size))
-        paddedArray *= 255
-        if slicedWidth < slicedHeight:
-            for row in range(slicedHeight):
-                for col in range(slicedWidth):
-                    if sliceArray[row,col] == 0:
-                        paddedArray[row, int(col + (slicedHeight - slicedWidth) / 2)] = 0
-
-        if slicedWidth > slicedHeight:
-            for row in range(slicedHeight):
-                for col in range(slicedWidth):
-                    if sliceArray[row,col] == 0:
-                        paddedArray[int(row + (slicedWidth - slicedHeight) / 2), col] = 0
-
-                    
-        
-        # make a "thumbnail" version of the image to get it to the right size for MNIST
-        sliceIm = Image.fromarray(paddedArray).convert("L")
-        sliceIm = ImageOps.invert(sliceIm)
-        size = (20,20)
-        sliceIm = sliceIm.resize(size, Image.NEAREST).filter(ImageFilter.SHARPEN)
-        sliceIm = ImageOps.invert(sliceIm)
-
-        thumbnailArray = np.array(sliceIm)
-
-        # make a new image with the 4px borders like MNIST has
-        borderedImage = np.zeros((28,28))
-        # make borders white
-        for row in range(4):
-            for col in range(28):
-                borderedImage[row,col] = 255
-                borderedImage[row + 24, col] = 255
-        for col in range(4):
-            for row in range(28):
-                borderedImage[row,col] = 255
-                borderedImage[row, col + 24] = 255
-
-        # map the thumbnailed image into the centre of the new bordered image
-        for row in range(20):
-            for col in range(20):
-                if thumbnailArray[row, col] == 255:
-                    borderedImage[row+4, col+4] = 255
-
-        borderedImage = Image.fromarray(borderedImage).convert("RGB")
-        borderedImage.save('images\loadedimage.png')
     
     # This method clears drawing on the canvas when 'clear' button is pressed
     def clearClicked(self):
@@ -262,13 +159,16 @@ class ProjectGUI(QMainWindow):
     def randomClicked(self):
         try:
             trainloader = torch.utils.data.DataLoader(model.mnist_trainset, batch_size=64, shuffle=True)
-            dataiter = iter(trainloader) # creating a iterator
-            images, labels = dataiter.next() # image and lables for image number (0 to 9) 
+            dataiter = iter(trainloader)
+            images, labels = dataiter.next() # image and labels for image number (0 to 9) 
             plt.clf()
             plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
             plt.axis('off')
             plt.savefig("images\loadedimage.png")
             plt.show()
+
+            # Tell the ModelWrapper to process the image we just saved
+            model.processRandImage()
 
             self.clearClicked()
 
@@ -276,11 +176,12 @@ class ProjectGUI(QMainWindow):
             print("Download MNIST first - go to file>Train Model")
 
     def recogniseClicked(self):
-        image = Image.open('images\loadedimage.png').convert('L') # Converts handrawn digit to grayscale
-        image_invert = ImageOps.invert(image) # Inverts the image
-        image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
+        image = Image.open('images\loadedimage.png').convert('L')
 
-        prediction, probabilities = model.predictDigit(image_invert) 
+        # Tell the model to predict the last digit we loaded (either by drawing or clicking Random)
+        prediction, probabilities = model.predictDigit() 
+
+        # Plot the bar graph
         plt.clf() # Clearing any existing plots
         background = plt.axes() 
         background.set(facecolor = "white")
@@ -292,8 +193,8 @@ class ProjectGUI(QMainWindow):
         plt.barh(classes, probabilities) # Plotting bar graph with all probabilities 
         plt.show()
         plt.savefig('images\predictionplot.png') # Saving plot as image
-        predictionimage = Image.open('images\loadedimage.png') # Opening the loaded image 
-        predictionimage = predictionimage.resize((120,120)) # Resizing loaded image to show on main window
+        # predictionimage = Image.open('images\loadedimage.png') # Opening the loaded image 
+        predictionimage = image.resize((120,120)) # Resizing loaded image to show on main window
         predictionimage.save('images\predictionimage.png') # Saving the resized image
         self.graph = QPixmap('images\predictionimage.png') # Setting image to pixmap on main window
         self.probability.setPixmap(self.graph) 
@@ -326,10 +227,6 @@ class ProjectGUI(QMainWindow):
             imgDialog.exec_()
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
-
-    # This function is kinda redundant
-    def load(self, path):
-        model.loadNet(path)
      
     # This function clears the drawing canvas on main window
     def drawingCanvasCleared(self):
@@ -354,9 +251,6 @@ class TrainDialog(QDialog):
         self.initUI()
 
     def initUI(self):
-        # modelPath is the path to the saved state_dict of the model to be passed into load()
-        # TODO: implement switching this model using a combo box
-
         self.setModal(True)
         self.setWindowTitle("Dialog")
 
@@ -407,7 +301,7 @@ class TrainDialog(QDialog):
         model.downloadTestSet()
         self.textbox.append("Datasets loaded")
 
-    # This method trains the DNN Model using the dataset
+    # This method trains the DNN Model using the dataset by creating a TrainingWorker instance and moving it to a thread, so that the 
     def train(self, s):
         model.setCancelFlag(False)
         try:
@@ -546,7 +440,7 @@ class ImagesDialog(QDialog):
                         imgArr = np.squeeze(model.mnist_trainset[10 * i+j + 100 * self.page][0])
                     elif self.mode == 'test':
                         imgArr = np.squeeze(model.mnist_testset[10 * i+j + 100 * self.page][0])
-                    plot.imsave('images\temp_img.png', imgArr)
-                    img = QPixmap('images\temp_img.png')
+                    plot.imsave(r'images\temp_img.png', imgArr) # r prefix makes it a raw string to avoid \t being taken as a literal
+                    img = QPixmap(r'images\temp_img.png')
                     label.setPixmap(img)
                     self.grid.addWidget(label, i, j)

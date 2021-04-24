@@ -17,6 +17,7 @@ from PIL import Image, ImageOps, ImageFilter
 
 from modules.project_model import ModelWrapper
 
+
 # The ProjectGUI class is the main window of the application, and contains the drawing and recognising interface, 
 # as well as a menubar which lets the user open the other dialog boxes for training and viewing
 class ProjectGUI(QMainWindow):
@@ -65,15 +66,17 @@ class ProjectGUI(QMainWindow):
 
         grid.addWidget(QLabel("Drawing Box"),0,0)
         
-        self.drawing_box = QLabel()
+        self.drawing_box = DrawingBox(parent = self) # setting the parent allows us to call functions from ProjectGUI later
         grid.addWidget(self.drawing_box,1,0)
-        self.pen = QPen()
-        self.pen.setWidth(28)
-        self.pen.setCapStyle(Qt.RoundCap)
-        self.canvas_side_length = 350
-        self.canvas = QPixmap(self.canvas_side_length,self.canvas_side_length)
-        self.canvas.fill(QColor(255,255,255))
-        self.drawing_box.setPixmap(self.canvas)
+        
+
+        # self.pen = QPen()
+        # self.pen.setWidth(28)
+        # self.pen.setCapStyle(Qt.RoundCap)
+        # self.canvas_side_length = 350
+        # self.canvas = QPixmap(self.canvas_side_length,self.canvas_side_length)
+        # self.canvas.fill(QColor(255,255,255))
+        # self.drawing_box.setPixmap(self.canvas)
 
         # This block sets up the right hand side buttons in a grid nested inside the central grid, directly to the right of the drawing box
         # TODO: improve variable naming for this section
@@ -125,29 +128,7 @@ class ProjectGUI(QMainWindow):
         self.setGeometry(300, 300, 300, 200)
         self.show()
 
-    # In order to draw numbers such as 4 we have to be able to "lift the pen" off of the canvas
-    def mousePressEvent(self, e):
-        self.last_point = QPoint(e.x(),e.y())
-        self.predictionWindowCleared()
-
-    # This method is responsible for drawing when the user clicks and drags the mouse
-    def mouseMoveEvent(self, e):
-        painter = QPainter(self.drawing_box.pixmap())
-        painter.setPen(self.pen)
-        self.this_point = QPoint(e.x(),e.y())
-        painter.drawLine(self.this_point, self.last_point)
-        self.last_point = QPoint(e.x(),e.y())
-        painter.end()
-        self.update()
-
-    def mouseReleaseEvent(self, e):
-        self.update()
-        # Save the image when the user releases the mouse
-        img = QPixmap(self.drawing_box.pixmap())
-        img.save("images\loadedimage.png")
-
-        # Tells the model class to process the image we just saved
-        model.processDrawnImage(self.canvas_side_length)
+    
 
         
     
@@ -206,31 +187,31 @@ class ProjectGUI(QMainWindow):
     # trainModelDialog() creates a dialog box when the user clicks File>Train Model
     # When open, the user can press buttons to download MNIST, train the dataset and close the window.
     def trainModelDialog(self, s):
-        dialog  = TrainDialog()
-        dialog.parent = self
-        dialog.exec_()
+        self.dialog  = TrainDialog()
+        self.dialog.parent = self
+        self.dialog.show()
 
     # This method is called when 'View Training Images' is pressed
     def viewTrainingImagesDialog(self):
         try:
-            imgDialog  = ImagesDialog()
-            imgDialog.setMode('train')
-            imgDialog.exec_()
+            self.imgDialog  = ImagesDialog()
+            self.imgDialog.setMode('train')
+            self.imgDialog.show()
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
 
     # This method is called when 'View Testing Images' is pressed
     def viewTestingImagesDialog(self):
         try:
-            imgDialog  = ImagesDialog()
-            imgDialog.setMode('test')
-            imgDialog.exec_()
+            self.imgDialog  = ImagesDialog()
+            self.imgDialog.setMode('test')
+            self.imgDialog.show()
         except AttributeError:
             print("Dataset not downloaded. Go to file>Train Model")
      
     # This function clears the drawing canvas on main window
     def drawingCanvasCleared(self):
-        self.drawing_box.setPixmap(self.canvas)
+        self.drawing_box.clearPixmap()
 
     # This function clears the loaded image and predicted digit on main window
     def predictionWindowCleared(self):
@@ -243,6 +224,53 @@ class ProjectGUI(QMainWindow):
         self.predictionValue.setText("Digit: " + str(numbertext)) 
         self.predictionValue.setAlignment(Qt.AlignCenter)
 
+
+# DrawingBox is a subclass of QLabel that implements the drawing box function so that users can draw their own digits
+# The drawn image is saved and processed every time
+class DrawingBox(QLabel):
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        self.initCanvas()
+
+    def initCanvas(self):
+        # Set pen settings
+        self.pen = QPen()
+        self.pen.setWidth(28)
+        self.pen.setCapStyle(Qt.RoundCap)
+        self.canvas_side_length = 350
+        self.canvas = QPixmap(self.canvas_side_length,self.canvas_side_length)
+        self.canvas.fill(QColor(255,255,255))
+        self.setPixmap(self.canvas)
+
+    # In order to draw numbers such as 4 we have to be able to "lift the pen" off of the canvas
+    def mousePressEvent(self, e):
+        self.last_point = QPoint(e.x(),e.y())
+        self.parent.predictionWindowCleared()
+
+    # This method is responsible for drawing when the user clicks and drags the mouse
+    def mouseMoveEvent(self, e):
+        painter = QPainter(self.pixmap())
+        painter.setPen(self.pen)
+        self.this_point = QPoint(e.x(),e.y())
+        painter.drawLine(self.this_point, self.last_point)
+        self.last_point = QPoint(e.x(),e.y())
+        painter.end()
+        self.update()
+
+    def mouseReleaseEvent(self, e):
+
+        # Save the image when the user releases the mouse
+        img = QPixmap(self.pixmap())
+        img.save("images\loadedimage.png")
+
+        # Tells the model class to process the image we just saved
+        model.processDrawnImage(self.canvas_side_length)
+
+    def clearPixmap(self):
+        self.setPixmap(self.canvas)
+
+
 # TrainDialog is opened when the user selects Train Model from the file menubar.
 # It allows the user to download MNIST, select and load or train the model (NOTE: implement switching models)
 class TrainDialog(QDialog):
@@ -252,7 +280,7 @@ class TrainDialog(QDialog):
 
     def initUI(self):
         self.setModal(True)
-        self.setWindowTitle("Dialog")
+        self.setWindowTitle("Download and Train")
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -346,6 +374,7 @@ class TrainDialog(QDialog):
         except AttributeError:
             pass
 
+
 # This class is moved into a thread and then runs the training so that the user can keep interacting with the GUI during training
 # Adapted from https://realpython.com/python-pyqt-qthread/
 class TrainingWorker(QObject):
@@ -380,6 +409,8 @@ class ImagesDialog(QDialog):
         super().__init__()
         
     def initUI(self):
+        self.setWindowTitle("View Dataset")
+
         # self.layout is a vertical box structure, to which we add the grid of images, the next/prev buttons and the page number
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -409,8 +440,6 @@ class ImagesDialog(QDialog):
         self.pageNum.setText(str(self.page))
         self.layout.addWidget(self.pageNum)
         self.loadImages()
-
-        self.show()
 
     # Called in ProjectGUI.viewTrainingImagesDialog or ProjectGUI.viewTestingImagesDialog and sets the mode of the dialog depending on which option the user selected
     def setMode(self, mode):

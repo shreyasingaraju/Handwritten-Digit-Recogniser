@@ -140,11 +140,9 @@ class ProjectGUI(QMainWindow):
             trainloader = torch.utils.data.DataLoader(model.mnist_testset, batch_size=64, shuffle=True)
             dataiter = iter(trainloader)
             images, labels = dataiter.next() # image and labels for image number (0 to 9) 
-            plt.clf()
-            plt.imshow(images[0].numpy().squeeze(), cmap='gray_r')
-            plt.axis('off')
-            plt.savefig("images\loadedimage.png")
-            plt.show()
+            image = transforms.ToPILImage()(images[0])
+            image = ImageOps.invert(image)
+            image.save('images\loadedimage.png')
 
             # Tell the ModelWrapper to process the image we just saved
             model.processRandImage()
@@ -156,8 +154,8 @@ class ProjectGUI(QMainWindow):
 
     # Tells the model to predict the digit, and then generates a bar graph showing the probability distrubution
     def recogniseClicked(self):
-        image = Image.open('images\loadedimage.png').convert('L')
-
+        image = Image.open('images\processedimage.png').convert('L')
+        image = ImageOps.invert(image)
         # Tell the model to predict the last digit we loaded (either by drawing or clicking Random)
         prediction, probabilities = model.predictDigit() 
 

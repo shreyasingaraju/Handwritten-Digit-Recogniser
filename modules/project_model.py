@@ -28,6 +28,7 @@ class ModelWrapper:
         self.cancel_flag = flag
 
     def downloadTrainSet(self):
+
         try:
             self.mnist_trainset = datasets.MNIST(root='mnist_data_train/', 
                                                 train=True, 
@@ -44,7 +45,7 @@ class ModelWrapper:
         try:
             self.mnist_testset = datasets.MNIST(root='mnist_data_test/', 
                                                 train=False, 
-                                                transform=transforms.ToTensor(), 3
+                                                transform=transforms.ToTensor(),
                                                 download=True)
         except:
             print("Couldn't download test set, try again")

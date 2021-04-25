@@ -22,12 +22,13 @@ if __name__ == '__main__':
 # - DONE: Remove saved images that were saved for debug purposes
 # - Fix "QCoreApplication::exec: The event loop is already running" error when clicking random
 # - DONE: Remove image processing code from MouseReleaseEvent, move to model class instead
-# - Add error dialogs instead of printing caught errors to terminal 
+# - DONE: Add error dialogs instead of printing caught errors to terminal 
 # - DONE: Make pen a circle
 # - Test if sharpen filter actually does anything
 # - Check if files are already downloaded?
 # - DONE: Clear the existing plotted graph if "random" is clicked
 # - DONE: Make the loaded image / digit appear in the pixmap in the lower left instead of the small graph
-# - Change randomClicked so that the image is saved in the correct aspect ratio
+# - DONE: Change randomClicked so that the image is saved in the correct aspect ratio
 # - Move the positions of the main window and plot window so that plot doesn't cover the buttons of main
 # - Add more informative comments
+# - Make Train start from scratch instead of doing an extra 10 epochs of the already loaded model

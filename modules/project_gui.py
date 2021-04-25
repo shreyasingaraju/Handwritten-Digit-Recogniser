@@ -312,7 +312,8 @@ class TrainDialog(QDialog):
         self.cncl_button = QPushButton("Cancel")
         button_grid.addWidget(self.cncl_button)
         self.cncl_button.clicked.connect(self.cancel)
-
+        self.cncl_button.clicked.connect(lambda: self.textbox.setText("Welcome")) 
+        self.cncl_button.clicked.connect(lambda: self.pbar.setValue(0))
         # Add the buttons to the overall layout of the dialog
         self.layout.addWidget(button_widg)
         
@@ -361,7 +362,7 @@ class TrainDialog(QDialog):
 
     # Called when cancel button is clicked
     def cancel(self):
-        self.textbox.setText("Welcome")
+        
         try:
             model.setCancelFlag(True)
             self.dl_mnist_button.setEnabled(True)
@@ -381,8 +382,8 @@ class TrainingWorker(QObject):
 
     def workerTrain(self):
         global num_epochs
-        num_epochs = 10
-
+        num_epochs = 7 # Chosen as beyond 7 there are significantly diminishing returns (see report)
+        
         for epoch in range(num_epochs):
             # Train the network for one epoch
             model.trainEpoch()
@@ -394,7 +395,7 @@ class TrainingWorker(QObject):
             result_tuple = (epoch, test_loss, correct)
             self.progress.emit(result_tuple)
         self.finished.emit()
-        torch.save(model.net.state_dict(), 'models\default')
+        torch.save(model.model.state_dict(), 'models\default')
 
 
 # This class shows the training images or the testing images. mode is passed into initUI() and represents whether we want to display the training or testing images

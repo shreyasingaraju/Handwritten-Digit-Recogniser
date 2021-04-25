@@ -68,7 +68,7 @@ class ModelWrapper:
             self.optimizer.step()
 
     def testModel(self):
-        self.net.eval()
+        self.model.eval()
         test_loss = 0
         correct = 0
         criterion = nn.CrossEntropyLoss()
@@ -84,6 +84,7 @@ class ModelWrapper:
         test_loss /= len(self.test_loader.dataset)
     
         correct = 100 * correct / len(self.test_loader.dataset)
+        print(correct)
         return test_loss, trunc(correct.item())
         
     def predictDigit(self):
@@ -232,6 +233,7 @@ class ModelWrapper:
         image_invert = ImageOps.invert(image) # Inverts the image
         image_invert = image_invert.resize((28, 28)) # Resizes the image to match MNIST Dataset
         image_invert.save('images\processedimage.png')
+
 
 # The model given to us in the lab
 class DefaultModel(nn.Module):

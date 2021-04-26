@@ -19,7 +19,7 @@ Install the following packages in Conda:
 >> pip install matplotlib
 >> pip install numpy
 ```
-Next set up the python environment on Visual Studio Code. 
+Next set up the python environment in Visual Studio Code. 
 Select the following interpreter:
 
 ```bash

@@ -93,7 +93,7 @@ class ProjectGUI(QMainWindow):
         random_button.clicked.connect(self.randomClicked) #connects to push button to random method
 
         self.model_button = QComboBox(self)
-        models = ["default", "with_dropout", "Model 3", "Model 4"]
+        models = ["default", "with_dropout"]
         self.model_button.setEditable(True)
         self.model_button.addItems(models)
         self.model_button.currentIndexChanged.connect(lambda: model.loadModel('models\\' + models[self.model_button.currentIndex()]))

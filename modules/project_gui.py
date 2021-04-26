@@ -23,6 +23,7 @@ from modules.project_model import ModelWrapper
 class ProjectGUI(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon('images/Logo.png'))
         self.initUI()
 
     def initUI(self):
@@ -109,10 +110,10 @@ class ProjectGUI(QMainWindow):
         subgrid.addWidget(recognise_button,3,0)
         grid.addWidget(subwidget,1,1)
 
-        subgrid.addWidget(QLabel("Class Probability"),4,0)
+        subgrid.addWidget(QLabel("Handwritten Digit"),4,0)
         self.probability = QLabel()
         subgrid.addWidget(self.probability,5,0)
-        self.graph = QPixmap(120,120)
+        self.graph = QPixmap(130,130)
         self.graph.fill(QColor(255,255,255))
         self.probability.setPixmap(self.graph)
         recognise_button.clicked.connect(self.recogniseClicked) #connects to push button to recognise method
@@ -166,13 +167,14 @@ class ProjectGUI(QMainWindow):
         classes = np.arange(start = 0,stop = 10, step = 1, dtype = None) # Setting classes from 0 to 9
         plt.yticks(np.arange(0, 10, step = 1)) # Setting y-Axis ticks 0 to 9
         plt.xticks(np.arange(0, 110, step = 10)) # Setting y-Axis ticks 0 to 100
+        plt.title('Class probabilities')
         plt.ylabel('Class')
         plt.xlabel('Probability %')
         plt.barh(classes, probabilities) # Plotting bar graph with all probabilities 
         plt.show()
         plt.savefig('images\predictionplot.png') # Saving plot as image
         # predictionimage = Image.open('images\loadedimage.png') # Opening the loaded image 
-        predictionimage = image.resize((120,120)) # Resizing loaded image to show on main window
+        predictionimage = image.resize((130,130)) # Resizing loaded image to show on main window
         predictionimage.save('images\predictionimage.png') # Saving the resized image
         self.graph = QPixmap('images\predictionimage.png') # Setting image to pixmap on main window
         self.probability.setPixmap(self.graph) 
@@ -220,7 +222,7 @@ class ProjectGUI(QMainWindow):
 
         # Clears predicted digit on main window
         numbertext = str(" ")
-        self.predictionValue.setText("Recognised digit: " + str(numbertext)) 
+        self.predictionValue.setText("Digit: " + str(numbertext)) 
         self.predictionValue.setAlignment(Qt.AlignCenter)
 
 
@@ -275,6 +277,7 @@ class DrawingBox(QLabel):
 class TrainDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon('images/Logo.png'))
         self.initUI()
 
     def initUI(self):
@@ -283,7 +286,7 @@ class TrainDialog(QDialog):
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self.setGeometry(300, 300,300, 300)
+        self.setGeometry(300, 300, 300, 300)
 
         # Added text box in dialog window
         self.text = "Welcome"
@@ -403,6 +406,7 @@ class TrainingWorker(QObject):
 class ImagesDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon('images/Logo.png'))
         
     def initUI(self):
         self.setWindowTitle("View Dataset")
@@ -476,6 +480,7 @@ class ImagesDialog(QDialog):
 class ErrorDialog(QMessageBox):
     def __init__(self, error_message):
         super().__init__()
+        self.setWindowIcon(QIcon('images/Logo.png'))
         self.initUI(error_message)
 
     def initUI(self, error_message):

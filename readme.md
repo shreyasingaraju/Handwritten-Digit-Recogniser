@@ -1,6 +1,6 @@
 # Handwritten Digit Recogniser
 
-This program allows users to hand draw digits from 0 to 9 on the screen and recognise the digits using AI machine learning in Python. 
+This program allows users to hand draw digits from 0 to 9 on the screen and recognise the digits using AI machine learning in Python. The program uses the MNIST dataset and PyTorch, an open source machine learning library, to train the model and recognise the digits.
 
 ## Installation and set-up
 
@@ -41,3 +41,7 @@ Python 3.8.8 64-bit ('py38':conda)
 11. The 'Clear' button will clear the main window. 
 12. You can repeat steps 7 to 9 and try different digits.
 13. To quit the program you can close the window at the top right corner or click on 'View' >> 'Exit' 
+
+## Contributors 
+
+Henry Mitchell-Hibbert & Shreya Singaraju

@@ -4,7 +4,7 @@ This program allows users to hand draw digits from 0 to 9 on the screen and reco
 
 ## Installation and set-up
 
-First install [Miniconda3](https://docs.conda.io/en/latest/miniconda.html) to download Python 3.8 environment. 
+First install [Miniconda3](https://docs.conda.io/en/latest/miniconda.html) and download Python 3.8 environment. 
 Install the following packages in Conda:
 - PyQt5
 - torch

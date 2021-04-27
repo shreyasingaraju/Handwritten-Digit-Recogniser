@@ -1,9 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QSizePolicy, QDialog, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QProgressBar, QGridLayout, QLabel, QFileDialog, QMessageBox, QMainWindow, QAction, qApp, QTextBrowser, QComboBox
-from PyQt5.QtCore import QBasicTimer, QPoint, QThread, pyqtSignal, QObject
+from PyQt5.QtCore import QBasicTimer, QPoint, QThread, pyqtSignal, QObject, Qt
 from PyQt5.QtGui import QPainter, QBrush, QPen, QPixmap, QColor, QIcon
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt
 
 import torch
 import torchvision

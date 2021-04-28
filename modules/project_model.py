@@ -24,9 +24,11 @@ class ModelWrapper:
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(self.model.parameters(), lr=0.01, momentum=0.5)
 
+    # Called when the user tries to cancel the training
     def setCancelFlag(self, flag):
         self.cancel_flag = flag
 
+    # Downloads training data - if user already has them downloaded it just loads that
     def downloadTrainSet(self):
 
         try:
@@ -41,6 +43,7 @@ class ModelWrapper:
                                             batch_size=self.batch_size,
                                             shuffle=True)
 
+    # Downloads testing data - if user already has them downloaded it just loads that
     def downloadTestSet(self):
         try:
             self.mnist_testset = datasets.MNIST(root='mnist_data_test/', 
@@ -54,9 +57,12 @@ class ModelWrapper:
                                           batch_size=self.batch_size,
                                           shuffle=False)
 
+    # Trains the current loaded model for one epoch
     def trainEpoch(self):      
         self.model.train()
         for batch_idx, (data, target) in enumerate(self.train_loader):
+            
+            # Exit the loop if the user has clicked cancel
             if self.cancel_flag == True:
                 break
 
@@ -67,6 +73,7 @@ class ModelWrapper:
             loss.backward()
             self.optimizer.step()
 
+    # Tests the currently loaded model, code adapted from the lab
     def testModel(self):
         self.model.eval()
         test_loss = 0
@@ -87,6 +94,7 @@ class ModelWrapper:
         print(correct)
         return test_loss, trunc(correct.item())
         
+    # Normalises the image then feeds it into the pre-trained neural network, returns the predicted digit and an array of probability
     def predictDigit(self):
         # Load the image which has already been processed by either processDrawnImage() or processRandImage()
         im = Image.open('images\processedimage.png').convert("L")
@@ -113,6 +121,7 @@ class ModelWrapper:
 
         return digit, probArray
 
+    # Loads the existing model specified by path, located in the models folder
     def loadModel(self, path):
         try:
             self.model.load_state_dict(torch.load(path))
@@ -120,6 +129,7 @@ class ModelWrapper:
         except FileNotFoundError:
             print("Selected model does not exist")
 
+    # Called when the user draws something, processes the drawn image to make it as similar to MNIST as possible
     def processDrawnImage(self, canvas_side_length):
         # Open the image as an Image object
         im = Image.open('images\loadedimage.png').convert("L")
@@ -228,6 +238,7 @@ class ModelWrapper:
         borderedImage = ImageOps.invert(borderedImage)
         borderedImage.save('images\processedimage.png')
 
+    # Inverts the loaded image to match the MNIST input
     def processRandImage(self):
         image = Image.open('images\loadedimage.png').convert("L")
         image_invert = ImageOps.invert(image) # Inverts the image
@@ -252,6 +263,7 @@ class DefaultModel(nn.Module):
         x = F.relu(self.l3(x))
         x = F.relu(self.l4(x))
         return self.l5(x)
+
 
 # The same as the default but with two dropout layers added to reduce overfitting
 class WithDropOutModel(nn.Module):

@@ -30,7 +30,6 @@ class ProjectGUI(QMainWindow):
         global model
         model = ModelWrapper()
         
-
         grid = QGridLayout()
         window = QWidget(self)
         window.setLayout(grid)
@@ -52,7 +51,6 @@ class ProjectGUI(QMainWindow):
         filemenu.addAction(exitAction)
         filemenu.addAction(openTrainModelDialog)
 
-
         # Add the view menubar
         openViewTrainingImagesDialog = QAction(QIcon('.\exit.png'), 'view Training Images', self)
         openViewTrainingImagesDialog.triggered.connect(self.viewTrainingImagesDialog)
@@ -69,15 +67,6 @@ class ProjectGUI(QMainWindow):
         self.drawing_box = DrawingBox(parent = self) # setting the parent allows us to call functions from ProjectGUI later
         grid.addWidget(self.drawing_box,1,0)
         
-
-        # self.pen = QPen()
-        # self.pen.setWidth(28)
-        # self.pen.setCapStyle(Qt.RoundCap)
-        # self.canvas_side_length = 350
-        # self.canvas = QPixmap(self.canvas_side_length,self.canvas_side_length)
-        # self.canvas.fill(QColor(255,255,255))
-        # self.drawing_box.setPixmap(self.canvas)
-
         # This block sets up the right hand side buttons in a grid nested inside the central grid, directly to the right of the drawing box
         # TODO: improve variable naming for this section
         subgrid = QGridLayout()
@@ -146,7 +135,6 @@ class ProjectGUI(QMainWindow):
 
             # Tell the ModelWrapper to process the image we just saved
             model.processRandImage()
-
             self.clearClicked()
 
         except AttributeError:
@@ -228,7 +216,8 @@ class ProjectGUI(QMainWindow):
 # DrawingBox is a subclass of QLabel that implements the drawing box function so that users can draw their own digits
 # The drawn image is saved and processed every time the user lifts the pen
 class DrawingBox(QLabel):
-    def __init__(self, parent):
+    # Parent is used to link the DrawingBox to its parent ProjectGUI window, to instruct its parent to clear the prediction window.
+    def __init__(self, parent): 
         super().__init__()
         self.parent = parent
         self.initCanvas()
@@ -238,6 +227,8 @@ class DrawingBox(QLabel):
         self.pen = QPen()
         self.pen.setWidth(28)
         self.pen.setCapStyle(Qt.RoundCap)
+
+        # Initialise the QPixmap
         self.canvas_side_length = 350
         self.canvas = QPixmap(self.canvas_side_length,self.canvas_side_length)
         self.canvas.fill(QColor(255,255,255))
@@ -258,9 +249,10 @@ class DrawingBox(QLabel):
         painter.end()
         self.update()
 
+    # Saves the current pixmap when the user releases the mouse, then instructs the model to process the image.
     def mouseReleaseEvent(self, e):
 
-        # Save the image when the user releases the mouse
+        
         img = QPixmap(self.pixmap())
         img.save("images\loadedimage.png")
 
@@ -319,7 +311,6 @@ class TrainDialog(QDialog):
         # Add the buttons to the overall layout of the dialog
         self.layout.addWidget(button_widg)
         
-
     # This method downloads the MNIST dataset when button is pressed
     def downloadMnist(self, s):
         self.textbox.append("Downloading train dataset...")
@@ -364,7 +355,6 @@ class TrainDialog(QDialog):
 
     # Called when cancel button is clicked
     def cancel(self):
-        
         try:
             model.setCancelFlag(True)
             self.dl_mnist_button.setEnabled(True)
@@ -380,8 +370,8 @@ class TrainingWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(tuple)
     update = pyqtSignal
-    
 
+    # Tells the model to train itself num_epochs times, and emits a signal containing the quantities (epoch, loss, number correct) to be received by the train window
     def workerTrain(self):
         global num_epochs
         num_epochs = 7 # Chosen as beyond 7 there are significantly diminishing returns (see report)
@@ -432,9 +422,9 @@ class ImagesDialog(QDialog):
         prev_button.clicked.connect(self.prevPage)
         next_button.clicked.connect(self.nextPage)
         self.layout.addWidget(next_prev_widg)
-
         self.resize(300, 400)
         
+        # Page counter
         self.pageNum = QLabel()
         self.pageNum.setText(str(self.page))
         self.layout.addWidget(self.pageNum)
